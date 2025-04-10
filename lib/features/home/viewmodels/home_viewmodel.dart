@@ -1,0 +1,30 @@
+import 'package:flutter/material.dart';
+import '../../../core/services/shared_prefs_service.dart';
+
+class HomeViewModel extends ChangeNotifier {
+  final SharedPrefsService _prefsService;
+  
+  bool _isLoading = false;
+  int _selectedIndex = 0;
+
+  HomeViewModel(this._prefsService);
+
+  bool get isLoading => _isLoading;
+  int get selectedIndex => _selectedIndex;
+
+  void setSelectedIndex(int index) {
+    _selectedIndex = index;
+    notifyListeners();
+  }
+
+  Future<void> fetchDashboardData() async {
+    _isLoading = true;
+    notifyListeners();
+
+    // Simulate API call
+    await Future.delayed(const Duration(seconds: 1));
+
+    _isLoading = false;
+    notifyListeners();
+  }
+}

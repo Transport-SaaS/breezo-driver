@@ -1,3 +1,7 @@
+import 'package:breezodriver/core/utils%20copy/size_config.dart';
+import 'package:breezodriver/features/auth/viewmodels/business_viewmodel.dart';
+import 'package:breezodriver/features/auth/viewmodels/location_viewmodel.dart';
+import 'package:breezodriver/features/auth/views/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,6 +28,9 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => getIt<AuthViewModel>()),
         ChangeNotifierProvider(create: (_) => getIt<HomeViewModel>()),
+        ChangeNotifierProvider(create: (_) => getIt<LocationViewModel>()),
+        ChangeNotifierProvider(create: (_) => getIt<BusinessViewModel>()),
+        
       ],
       child: MaterialApp(
         title: 'Breezo Driver',
@@ -31,8 +38,13 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        initialRoute: AppRoutes.splash,
-        onGenerateRoute: AppRoutes.generateRoute,
+         home: Builder(
+          builder: (context) {
+            SizeConfig().init(context);
+            // return MainNavigationScreen();
+            return SplashScreen();
+          },
+        ),
       ),
     );
   }

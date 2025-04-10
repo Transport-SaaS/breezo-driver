@@ -1,4 +1,5 @@
 import 'package:breezodriver/core/utils/app_colors.dart';
+import 'package:breezodriver/features/auth/views/select_home_location.dart';
 import 'package:breezodriver/widgets/common_button.dart';
 import 'package:breezodriver/widgets/common_textfield.dart';
 import 'package:breezodriver/widgets/progress_bar.dart';
@@ -65,13 +66,13 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Profile completed for: ${_nameController.text}')),
     );
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder:
-    //         (context) => const SelectLocationScreen(isFromAllAddress: false),
-    //   ),
-    // );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => const SelectLocationScreen(isFromAllAddress: false),
+      ),
+    );
   }
 
   @override

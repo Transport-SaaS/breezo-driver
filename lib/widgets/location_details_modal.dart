@@ -1,5 +1,6 @@
 // import 'package:breezoapp1/views/screens/office_details_screen.dart';
 import 'package:breezodriver/core/utils/app_colors.dart';
+import 'package:breezodriver/features/auth/views/business_selection_screen.dart';
 import 'package:flutter/material.dart';
 
 import '../widgets/common_textfield.dart';
@@ -57,7 +58,9 @@ class _LocationDetailsModalState extends State<LocationDetailsModal> {
                     Icon(Icons.location_on, color: AppColors.primarycolor),
 
                     Text(
-                      widget.placeName,
+                      widget.placeName.length > 40
+                          ? widget.placeName.substring(0, 40) + '...'
+                          : widget.placeName,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -136,12 +139,12 @@ class _LocationDetailsModalState extends State<LocationDetailsModal> {
                 onPressed: () {
                   // Handle confirmation and close modal
                     if (widget.isFromAllAddress==false) {
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (context) => const OfficeDetailsScreen(),
-                    //   ),
-                    // );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const BusinessSelectionScreen(),
+                      ),
+                    );
                   } else {
                     Navigator.pop(context, {
                       'address': widget.address,

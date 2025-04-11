@@ -1,299 +1,403 @@
+import 'dart:math';
 
 import 'package:breezodriver/core/utils%20copy/size_config.dart';
 import 'package:breezodriver/core/utils/app_assets.dart';
+import 'package:breezodriver/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart' show SvgPicture;
 
-import 'package:rating_and_feedback_collector/rating_and_feedback_collector.dart';
-
 class ScheduledTripCard extends StatefulWidget {
-  final String date;
+  final String assignedAt;
   final String startTime;
   final String startLocation;
-  final String startAddress;
   final String endTime;
   final String endLocation;
-  final String endAddress;
-  final String lockTime;
-  final VoidCallback onChangePressed;
-  final VoidCallback onMorePressed;
-  final bool isScheduled;
-  final bool isCompleted;
+  final String duration;
+  final String distance;
+  final int passengers;
+  final String acceptBeforeTime;
+  // Add this to the ScheduledTripCard class parameters
+  final Function()? onTap;
+  
   const ScheduledTripCard({
     super.key,
-    required this.date,
+    required this.assignedAt,
     required this.startTime,
     required this.startLocation,
-    required this.startAddress,
     required this.endTime,
     required this.endLocation,
-    required this.endAddress,
-    required this.lockTime,
-    required this.onChangePressed,
-    required this.onMorePressed,
-    required this.isCompleted,
-    this.isScheduled = true,
+    required this.duration,
+    required this.distance,
+    required this.passengers,
+    required this.acceptBeforeTime,
+    this.onTap,
   });
-
+  
   @override
   State<ScheduledTripCard> createState() => _ScheduledTripCardState();
 }
 
 class _ScheduledTripCardState extends State<ScheduledTripCard> {
-  double _rating = 0.0;
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      margin: EdgeInsets.symmetric(vertical: 15),
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 2,
-            blurRadius: 5,
-          ),
-        ],
-        borderRadius: BorderRadius.circular(16),
-        color: Colors.white,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color:
-                      widget.isCompleted
-                          ? Colors.green.withOpacity(0.1)
-                          : Colors.amber[50],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  widget.isCompleted && widget.isScheduled == false
-                      ? 'Completed'
-                      : widget.isCompleted == false &&
-                          widget.isScheduled == false
-                      ? "Ongoing"
-                      : 'Scheduled',
-                  style: TextStyle(
-                    color: widget.isCompleted ? Colors.green : Colors.amber,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                widget.date,
-                style: TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-              Spacer(),
-              
-            ],
-          ),
+    final Color pickupTagColor = Colors.cyan.shade100.withOpacity(0.6);
+    final Color pickupTagTextColor = Colors.cyan.shade800;
+    final Color iconBackgroundColor = Colors.purple.shade50;
+    final Color iconColor = Colors.deepPurple.shade400;
+    final Color chipBackgroundColor = Colors.grey.shade200;
+    final Color chipTextColor = Colors.grey.shade800;
+    final Color acceptBeforeColor = Colors.red.shade600;
+    final Color dottedLineColor = Colors.deepPurple.shade400;
 
-          const SizedBox(height: 12),
-          // --- ICONS WITH DOTTED LINE ---
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                children: [
-                  SvgPicture.asset(
-                    AppAssets.homeSchedule,
-                    color: Colors.green,
-                    height: SizeConfig.getProportionateScreenWidth(18),
+    final bool isAssigned = !widget.acceptBeforeTime.contains('Accepted') && 
+                            !widget.acceptBeforeTime.contains('Expired') && 
+                            !widget.acceptBeforeTime.contains('Completed');
+    final bool isAccepted = widget.acceptBeforeTime.contains('Accepted');
+    final bool isMissed = widget.acceptBeforeTime.contains('Expired');
+    final bool isCompleted = widget.acceptBeforeTime.contains('Completed');
+
+    String tagText = 'PICKUP';
+    Color tagBgColor = pickupTagColor;
+    Color tagTextColor = pickupTagTextColor;
+    
+    if (isAccepted) {
+      tagText = 'ACCEPTED';
+      tagBgColor = Colors.green.shade100.withOpacity(0.6);
+      tagTextColor = Colors.green.shade800;
+    } else if (isMissed) {
+      tagText = 'MISSED';
+      tagBgColor = Colors.red.shade100.withOpacity(0.6);
+      tagTextColor = Colors.red.shade800;
+    } else if (isCompleted) {
+      tagText = 'COMPLETED';
+      tagBgColor = Colors.purple.shade100.withOpacity(0.6);
+      tagTextColor = Colors.purple.shade800;
+    }
+
+    return InkWell(
+      onTap: widget.onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+          borderRadius: BorderRadius.circular(16),
+          color: Colors.white,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: tagBgColor,
+                    border: Border.all(
+                      color: tagTextColor,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  _DottedLine(
-                    height: SizeConfig.getProportionateScreenHeight(30),
+                  child: Text(
+                    tagText,
+                    style: TextStyle(
+                      color: tagTextColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  SvgPicture.asset(
-                    AppAssets.business,
-                    color: Colors.green.shade900,
-                    height: SizeConfig.getProportionateScreenWidth(16),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                ),
+                Text(
+                  'Assigned at: ${widget.assignedAt}',
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+      
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Home row
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${widget.startTime}  ${widget.startLocation}',
-                          style: TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            widget.startAddress,
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                        ),
-                      ],
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: iconBackgroundColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child:  SvgPicture.asset(
+                      AppAssets.homeSchedule,
+                      color: AppColors.primarycolor,
+                      height: SizeConfig.getProportionateScreenWidth(14),
                     ),
-                    SizedBox(
-                      height: SizeConfig.getProportionateScreenHeight(25),
                     ),
-                    // Office row
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${widget.endTime}  ${widget.endLocation}',
-                          style: TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            widget.endAddress,
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                        ),
-                      ],
+                    _DottedLine(height: SizeConfig.blockSizeVertical*5.8, color: dottedLineColor),
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: iconBackgroundColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child:SvgPicture.asset(
+                      AppAssets.business,
+                      color: AppColors.primarycolor,
+                      height: SizeConfig.getProportionateScreenWidth(12),
+                    ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Divider(height: 1, color: Colors.grey[300]),
-          ),
-          widget.isCompleted == false
-              ? Row(
+                const SizedBox(width: 12),
+      
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            widget.startTime,
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Start',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              widget.startLocation,
+                              style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+      
+                      // Info chips row
+                      Row(
+                        children: [
+                          _buildInfoChip(Icons.schedule, widget.duration, chipBackgroundColor, chipTextColor),
+                          const SizedBox(width: 8),
+                          _buildInfoChip(Icons.directions_car_filled_outlined, widget.distance, chipBackgroundColor, chipTextColor),
+                          const SizedBox(width: 8),
+                          _buildInfoChip(Icons.people_outline, widget.passengers.toString(), chipBackgroundColor, chipTextColor),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+      
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            widget.endTime,
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Destination',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              widget.endLocation,
+                              style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Divider(height: 1, color: Colors.grey[300]),
+            const SizedBox(height: 12),
+      
+            if (isAssigned) 
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    'Accept before ',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 13,
+                    ),
+                  ),
+                  Text(
+                    widget.acceptBeforeTime,
+                    style: TextStyle(
+                      color: acceptBeforeColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.timer_outlined,
+                    color: acceptBeforeColor,
+                    size: 16,
+                  ),
+                ],
+              )
+            else if (isAccepted)
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  TextButton(
-                    onPressed: widget.onChangePressed,
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size(0, 0),
-                    ),
-                    child: const Text(
-                      'Change',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.red,
-                        fontWeight: FontWeight.w500,
+                  OutlinedButton(
+                    onPressed: () {},
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: BorderSide(color: Colors.red),
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
+                    child: Text('Cancel', style: TextStyle(fontSize: 12)),
                   ),
                   Row(
                     children: [
+                      Icon(Icons.check_circle, color: Colors.green, size: 16),
+                      SizedBox(width: 4),
                       Text(
-                        'Your trip will be locked in ',
+                        'Accepted',
                         style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: SizeConfig.blockSizeHorizontal * 3,
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
                         ),
-                      ),
-                      Text(
-                        widget.lockTime,
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.w500,
-                          fontSize: SizeConfig.blockSizeHorizontal * 3,
-                        ),
-                      ),
-                      SizedBox(width: SizeConfig.blockSizeHorizontal * 1),
-                      SvgPicture.asset(
-                        AppAssets.time,
-
-                        color: Colors.red,
-                        height: SizeConfig.getProportionateScreenWidth(12),
                       ),
                     ],
                   ),
                 ],
               )
-              : Row(
+            else if (isMissed)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, color: Colors.red, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    'You missed this trip',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              )
+            else if (isCompleted)
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "You reached your destination in 42 mins.",
-                    style: TextStyle(color: Colors.grey[400], fontSize: 11),
+                    "Trip completed in ${widget.duration}",
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
                   ),
-                  RatingBar(
-                    iconSize: SizeConfig.getProportionateScreenWidth(
-                      18,
-                    ), // Size of the rating icons
-                    allowHalfRating: true, // Allows selection of half ratings
-                    filledIcon:
-                        Icons.star, // Icon to display for a filled rating unit
-                    halfFilledIcon:
-                        Icons
-                            .star_half, // Icon to display for a half-filled rating unit
-                    emptyIcon:
-                        Icons
-                            .star_border, // Icon to display for an empty rating units
-                    filledColor: Colors.amber, // Color of filled rating units
-                    emptyColor: Colors.grey, // Color of empty rating units
-                    currentRating: _rating, // Set initial rating value
-                    onRatingChanged: (rating) {
-                      // Callback triggered when the rating is changed
-                      setState(() {
-                        _rating = rating;
-                      });
-                    },
+                  Row(
+                    children: List.generate(5, (index) {
+                      return Icon(
+                        index < 4 ? Icons.star : Icons.star_border,
+                        color: Colors.amber,
+                        size: 16,
+                      );
+                    }),
                   ),
                 ],
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(IconData icon, String text, Color backgroundColor, Color textColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        border: Border.all(color: textColor),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: textColor),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(fontSize: 12, color: textColor, fontWeight: FontWeight.w500),
+          ),
         ],
       ),
     );
   }
 }
 
-/// A small custom widget to draw a vertical dotted line.
-/// You can adjust [height], [color], [dashHeight], and [dashSpace] as needed.
 class _DottedLine extends StatelessWidget {
   final double height;
   final Color color;
-  const _DottedLine({Key? key, this.height = 40, this.color = Colors.grey})
-    : super(key: key);
+  final double dashHeight;
+  final double dashSpace;
+  const _DottedLine({
+    Key? key, 
+    this.height = 40, 
+    this.color = Colors.grey,
+    this.dashHeight = 3.0,
+    this.dashSpace = 3.0,
+    }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
       size: Size(1, height),
-      painter: _DottedLinePainter(color),
+      painter: _DottedLinePainter(color, dashHeight, dashSpace),
     );
   }
 }
 
 class _DottedLinePainter extends CustomPainter {
   final Color color;
-  _DottedLinePainter(this.color);
+  final double dashHeight;
+  final double dashSpace;
+  _DottedLinePainter(this.color, this.dashHeight, this.dashSpace);
 
   @override
   void paint(Canvas canvas, Size size) {
-    double dashHeight = 4, dashSpace = 4;
-    final paint =
-        Paint()
+    final paint = Paint()
           ..color = color
-          ..strokeWidth = 1;
+          ..strokeWidth = 1.5
+          ..strokeCap = StrokeCap.round;
 
     double startY = 0;
     while (startY < size.height) {
-      canvas.drawLine(Offset(0, startY), Offset(0, startY + dashHeight), paint);
+      canvas.drawCircle(Offset(size.width / 2, startY), paint.strokeWidth / 2, paint);
       startY += dashHeight + dashSpace;
     }
   }
 
   @override
-  bool shouldRepaint(_DottedLinePainter oldDelegate) => false;
+  bool shouldRepaint(_DottedLinePainter oldDelegate) => 
+      oldDelegate.color != color || 
+      oldDelegate.dashHeight != dashHeight || 
+      oldDelegate.dashSpace != dashSpace;
 }

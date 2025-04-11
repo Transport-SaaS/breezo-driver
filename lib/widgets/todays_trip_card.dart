@@ -1,9 +1,11 @@
-
+import 'package:breezodriver/core/utils%20copy/size_config.dart';
 import 'package:breezodriver/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'scheduled_trip_card.dart';
 import 'package:provider/provider.dart';
-
+import 'package:breezodriver/features/trips/models/trip_model.dart';
+import 'package:breezodriver/features/trips/views/trip_details_screen.dart';
+import 'package:breezodriver/features/trips/data/trip_data.dart';
 
 class TodaysTripCard extends StatefulWidget {
   const TodaysTripCard({super.key});
@@ -13,20 +15,39 @@ class TodaysTripCard extends StatefulWidget {
 }
 
 class _TodaysTripCardState extends State<TodaysTripCard> {
-  bool isToOffice = true;
+  int _selectedTabIndex = 0;
+  
+  // Map to store trips by status
+  late Map<String, List<TripModel>> _tripsByStatus;
+  
+  @override
+  void initState() {
+    super.initState();
+    // Initialize trips data
+    _initializeTrips();
+  }
+  
+  void _initializeTrips() {
+    // Get all sample trips from TripData
+    final allTrips = TripData.getSampleTrips();
+    
+    // Group trips by status and organize tabs
+    _tripsByStatus = {
+      'Assigned': allTrips.where((trip) => trip.status == 'Assigned').toList(),
+      'Accepted': allTrips.where((trip) => trip.status == 'Accepted').toList(),
+      'Missed': allTrips.where((trip) => trip.status == 'Missed').toList(),
+      'Completed': allTrips.where((trip) => trip.status == 'Completed').toList(),
+    };
+  }
+
+  List<String> get _tabTitles => _tripsByStatus.keys.toList();
 
   @override
   Widget build(BuildContext context) {
     // Get screen height
     final screenHeight = MediaQuery.of(context).size.height;
-    // Calculate approximate height (adjust multiplier as needed)
+    // Calculate approximate height
     final containerHeight = screenHeight * 0.8; // Takes 80% of screen height
-
-    // // Get the DriverStatusViewModel
-    // final driverStatusModel = Provider.of<DriverStatusViewModel>(
-    //   context,
-    //   listen: false,
-    // );
 
     return Container(
       width: double.infinity,
@@ -51,107 +72,100 @@ class _TodaysTripCardState extends State<TodaysTripCard> {
             ),
           ),
           const SizedBox(height: 16),
-          // Toggle buttons row
-          Row(
-            children: [
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    isToOffice = true;
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 13,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        isToOffice ? AppColors.primarycolorDark : Colors.white,
-                    border: Border.all(
-                      color:
-                          isToOffice
+          
+          // Tabs row
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: List.generate(_tabTitles.length, (index) {
+                final title = _tabTitles[index];
+                final count = _tripsByStatus[title]?.length ?? 0;
+                
+                return Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedTabIndex = index;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _selectedTabIndex == index 
+                            ? AppColors.primarycolorDark 
+                            : Colors.white,
+                        border: Border.all(
+                          color: _selectedTabIndex == index
                               ? AppColors.primarycolorDark
                               : AppColors.primarycolor.withOpacity(0.3),
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    'To Office',
-                    style: TextStyle(
-                      color: isToOffice ? Colors.white : Colors.black,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    isToOffice = false;
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 13,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        !isToOffice ? AppColors.primarycolorDark : Colors.white,
-                    border: Border.all(
-                      color:
-                          !isToOffice
-                              ? AppColors.primarycolorDark
-                              : AppColors.primarycolor.withOpacity(0.3),
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    'From Office',
-                    style: TextStyle(
-                      color: !isToOffice ? Colors.white : Colors.black,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          // Content area
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child:
-                isToOffice
-                    ? ScheduledTripCard(
-                      isCompleted: false,
-                      date: 'MON, 23 JAN 2025',
-                      startTime: '09:45',
-                      startLocation: 'Home',
-                      startAddress:
-                          'Building No. 134, Mahalaxmi Nagar, Nagas...',
-                      endTime: '19:00',
-                      endLocation: 'Office',
-                      endAddress: 'A2, Block-C, ABC Techpark, Magarpattam...',
-                      lockTime: '1:23 min',
-                      onChangePressed: () {
-                        // // Toggle scheduled status
-                        // bool currentStatus = driverStatusModel.isScheduled;
-                        // driverStatusModel.setScheduledStatus(!currentStatus);
-                      },
-                      onMorePressed: () {},
-                      isScheduled:
-                          true, // Use the value from ViewModel
-                    )
-                    : const Center(
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                       child: Text(
-                        'No trips scheduled',
-                        style: TextStyle(color: Colors.grey, fontSize: 14),
+                        '$title ($count)',
+                        style: TextStyle(
+                          color: _selectedTabIndex == index ? Colors.white : Colors.black,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
+                  ),
+                );
+              }),
+            ),
+          ),
+
+          // Content area - scrollable list of trips
+          Expanded(
+            child: _getCurrentTrips().isEmpty 
+              ? Center(
+                  child: Text(
+                    'No ${_tabTitles[_selectedTabIndex].toLowerCase()} trips',
+                    style: const TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  itemCount: _getCurrentTrips().length,
+                  itemBuilder: (context, index) {
+                    final trip = _getCurrentTrips()[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: ScheduledTripCard(
+                        assignedAt: trip.assignedAt,
+                        startTime: trip.startTime,
+                        startLocation: trip.startAddress,
+                        endTime: trip.endTime,
+                        endLocation: trip.endAddress,
+                        duration: trip.duration,
+                        distance: trip.distance,
+                        passengers: trip.passengers,
+                        acceptBeforeTime: trip.acceptBeforeTime,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TripDetailsScreen(trip: trip),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
           ),
         ],
       ),
     );
+  }
+  
+  // Helper to get current trips based on selected tab
+  List<TripModel> _getCurrentTrips() {
+    final selectedStatus = _tabTitles[_selectedTabIndex];
+    return _tripsByStatus[selectedStatus] ?? [];
   }
 }

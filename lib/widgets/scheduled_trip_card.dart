@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:breezodriver/core/utils%20copy/size_config.dart';
 import 'package:breezodriver/core/utils/app_assets.dart';
 import 'package:breezodriver/core/utils/app_colors.dart';
+import 'package:breezodriver/widgets/info_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart' show SvgPicture;
 
@@ -189,11 +190,11 @@ class _ScheduledTripCardState extends State<ScheduledTripCard> {
                       // Info chips row
                       Row(
                         children: [
-                          _buildInfoChip(Icons.schedule, widget.duration, chipBackgroundColor, chipTextColor),
+                          buildInfoChip(Icons.schedule, widget.duration, chipBackgroundColor, chipTextColor),
                           const SizedBox(width: 8),
-                          _buildInfoChip(Icons.directions_car_filled_outlined, widget.distance, chipBackgroundColor, chipTextColor),
+                          buildInfoChip(Icons.directions_car_filled_outlined, widget.distance, chipBackgroundColor, chipTextColor),
                           const SizedBox(width: 8),
-                          _buildInfoChip(Icons.people_outline, widget.passengers.toString(), chipBackgroundColor, chipTextColor),
+                          buildInfoChip(Icons.people_outline, widget.passengers.toString(), chipBackgroundColor, chipTextColor),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -261,18 +262,18 @@ class _ScheduledTripCardState extends State<ScheduledTripCard> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      side: BorderSide(color: Colors.red),
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: Text('Cancel', style: TextStyle(fontSize: 12)),
-                  ),
+                  // OutlinedButton(
+                  //   onPressed: () {},
+                  //   style: OutlinedButton.styleFrom(
+                  //     foregroundColor: Colors.red,
+                  //     side: BorderSide(color: Colors.red),
+                  //     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                  //     shape: RoundedRectangleBorder(
+                  //       borderRadius: BorderRadius.circular(20),
+                  //     ),
+                  //   ),
+                  //   child: Text('Cancel', style: TextStyle(fontSize: 12)),
+                  // ),
                   Row(
                     children: [
                       Icon(Icons.check_circle, color: Colors.green, size: 16),
@@ -330,27 +331,6 @@ class _ScheduledTripCardState extends State<ScheduledTripCard> {
     );
   }
 
-  Widget _buildInfoChip(IconData icon, String text, Color backgroundColor, Color textColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        border: Border.all(color: textColor),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: textColor),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: TextStyle(fontSize: 12, color: textColor, fontWeight: FontWeight.w500),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _DottedLine extends StatelessWidget {

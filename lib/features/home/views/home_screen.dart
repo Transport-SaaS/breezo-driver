@@ -1,6 +1,7 @@
 import 'package:breezodriver/core/utils%20copy/size_config.dart';
 import 'package:breezodriver/core/utils/app_assets.dart';
 import 'package:breezodriver/core/utils/app_colors.dart';
+import 'package:breezodriver/features/profile/views/profile_screen.dart';
 import 'package:breezodriver/widgets/todays_trip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -29,10 +30,16 @@ class HomeScreen extends StatelessWidget {
             size: MediaQuery.of(context).size.width * 0.06, // ~24px
           ),
           SizedBox(width: MediaQuery.of(context).size.width * 0.02), // ~8px
-          Icon(
-            Icons.menu,
-            color: Colors.white,
-            size: MediaQuery.of(context).size.width * 0.06,
+          GestureDetector
+          (
+            onTap: (){
+              Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
+            },
+            child: Icon(
+              Icons.menu,
+              color: Colors.white,
+              size: MediaQuery.of(context).size.width * 0.06,
+            ),
           ),
           SizedBox(width: MediaQuery.of(context).size.width * 0.02), // ~8px
         ],

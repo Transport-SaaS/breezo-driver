@@ -3,6 +3,7 @@
 import 'package:breezodriver/core/utils/app_assets.dart';
 import 'package:breezodriver/features/auth/views/phone_number_screen.dart';
 import 'package:breezodriver/features/auth/views/select_home_location.dart';
+import 'package:breezodriver/features/home/views/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
@@ -38,7 +39,8 @@ class _SplashScreenState extends State<SplashScreen> {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => 
-              const SelectLocationScreen(isFromAllAddress: false),
+              const PhoneNumberScreen(),
+              // const HomeScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             const begin = 0.0;
             const end = 1.0;
@@ -73,11 +75,24 @@ class _SplashScreenState extends State<SplashScreen> {
        return Scaffold(
       body: Container(
         
-        child: Center(
-          child: Image.asset(
-            AppAssets.logo,
-            width: 150, // Adjust sizing to fit your design
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Center(
+              child: Image.asset(
+                AppAssets.logo,
+                width: 150, // Adjust sizing to fit your design
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Driver Partner App",
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+          ],
         ),
       ),
     );

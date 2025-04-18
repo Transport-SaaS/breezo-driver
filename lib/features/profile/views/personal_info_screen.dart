@@ -3,7 +3,6 @@ import 'package:breezodriver/features/auth/views/select_home_location.dart';
 import 'package:breezodriver/widgets/common_button.dart';
 import 'package:breezodriver/widgets/common_textfield.dart';
 import 'package:breezodriver/widgets/progress_bar.dart';
-import 'package:cherry_toast/cherry_toast.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 // For picking images from gallery/camera
@@ -12,25 +11,21 @@ import 'package:image_picker/image_picker.dart';
 
 // import 'select_location_screen.dart';
 
-class PersonalDetailsScreen extends StatefulWidget {
-  final Map<String, dynamic>? profileData;
-  
-  const PersonalDetailsScreen({
-    Key? key, 
-    this.profileData,
-  }) : super(key: key);
+class PersonalProfileDetailsScreen extends StatefulWidget {
+  const PersonalProfileDetailsScreen({Key? key}) : super(key: key);
 
   @override
-  State<PersonalDetailsScreen> createState() => _PersonalDetailsScreenState();
+  State<PersonalProfileDetailsScreen> createState() => _PersonalProfileDetailsScreenState();
 }
 
-class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
+class _PersonalProfileDetailsScreenState extends State<PersonalProfileDetailsScreen> {
   // Text controllers
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _alternatePhoneController = TextEditingController();
-  final _driverExperienceController = TextEditingController();
-  final _driverLicenceController = TextEditingController();
+  final _currentAddressController = TextEditingController();
+  final _permanentAddressController = TextEditingController();
+
   final _aadharCardNumberController = TextEditingController();
 
   // Gender dropdown
@@ -39,39 +34,16 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
 
   // Avatar image
   XFile? _pickedImage;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeData();
-  }
-
-  void _initializeData() {
-    if (widget.profileData != null) {
-      final data = widget.profileData!;
-      _nameController.text = data['name'] ?? '';
-      _driverExperienceController.text = data['experience']?.toString() ?? '';
-      _driverLicenceController.text = data['licenseNum'] ?? '';
-      _aadharCardNumberController.text = data['aadharNum'] ?? '';
-      
-      // Handle gender
-      if (data['gender'] == 'M') {
-        _selectedGender = 'Male';
-      } else if (data['gender'] == 'F') {
-        _selectedGender = 'Female';
-      }
-      
-      // Note: profilePic handling would go here if needed
-      // if (data['profilePic'] != null) { ... }
-    }
-  }
+  
+  // Add a flag to track edit mode
+  bool _isEditMode = false;
 
   /// Picks an image from camera or gallery
   Future<void> _pickImage() async {
-    // Example using image_picker
+    // Only allow picking image in edit mode
+    if (!_isEditMode) return;
+    
     final ImagePicker picker = ImagePicker();
-
-    // Show a bottom sheet or dialog to choose camera/gallery
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       setState(() {
@@ -85,24 +57,17 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
     return _nameController.text.trim().isNotEmpty &&
         _emailController.text.trim().isNotEmpty &&
         _alternatePhoneController.text.trim().isNotEmpty &&
-        _driverExperienceController.text.trim().isNotEmpty &&
-        _driverLicenceController.text.trim().isNotEmpty &&
-        _aadharCardNumberController.text.trim().isNotEmpty &&
+        _currentAddressController.text.trim().isNotEmpty &&
+        _permanentAddressController.text.trim().isNotEmpty &&
         _selectedGender != null;
   }
 
   void _onContinuePressed() {
-    if (!isFormValid) return;
+    if (!isFormValid || !_isEditMode) return;
     // TODO: Handle form submission logic, then navigate or do next steps
-    CherryToast.info(
-      title: const Text('Data submitted successfully!'),
-      toastDuration: const Duration(seconds: 2),
-      iconWidget: const Icon(Icons.check_circle, color: Colors.green),
-      // enableIconAnimation: false,
-      disableToastAnimation: true,
-
-
-    ).show(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Profile completed for: ${_nameController.text}')),
+    );
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -112,13 +77,20 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
     );
   }
 
+  // Toggle edit mode
+  void _toggleEditMode() {
+    setState(() {
+      _isEditMode = !_isEditMode;
+    });
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
     _alternatePhoneController.dispose();
-    _driverExperienceController.dispose();
-    _driverLicenceController.dispose();
+    _currentAddressController.dispose();
+    _permanentAddressController.dispose();
     _aadharCardNumberController.dispose();
     super.dispose();
   }
@@ -132,11 +104,8 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Progress bar & top title
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
-              child: const ProgressBar(currentStep: 3),
-            ),
+            SizedBox(height: 20,),
+           
             Expanded(
               child: Container(
                 width: double.infinity,
@@ -166,15 +135,48 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                           ),
                           const SizedBox(width: 10),
                           const Text(
-                            'Complete your profile',
+                            'Your Profile',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          Spacer(),
+                          GestureDetector(
+                            onTap: _toggleEditMode,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: _isEditMode ? AppColors.secondary700 : Colors.grey),
+                              borderRadius: BorderRadius.circular(14),
+                              color: _isEditMode ? AppColors.secondary700.withOpacity(0.1) : Colors.transparent,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _isEditMode ? Icons.check : Icons.edit_outlined,
+                                  size: 16,
+                                  color: _isEditMode ? AppColors.secondary700 : Colors.grey, 
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  _isEditMode ? 'Done' : 'Edit',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: _isEditMode ? AppColors.secondary700 : Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 20),
 
                       // Avatar + Camera/Gallery icon
                       Stack(
@@ -189,24 +191,6 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                                     ? null
                                     : FileImage(
                                       File(_pickedImage!.path),
-                                      // Convert XFile to File
-                                      // (You need dart:io for this)
-                                      // If you're on web, use a different approach
-                                      // For demonstration, we assume mobile
-                                      // so it works with a File constructor
-                                      // from the path
-                                      // e.g. File(_pickedImage!.path)
-                                      //
-                                      // But you must `import 'dart:io';`
-                                      //
-                                      // If building for web, you'll need
-                                      // a different approach.
-                                      // Or just store the path in memory
-                                      // for display.
-                                      //
-                                      // We'll just show a placeholder logic:
-                                      // (Uncomment if you want actual file usage)
-                                      // File(_pickedImage!.path),
                                     ),
                             child:
                                 _pickedImage == null
@@ -217,19 +201,20 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                                     )
                                     : null,
                           ),
-                          // Small camera icon in a circle
-                          InkWell(
-                            onTap: _pickImage,
-                            child: CircleAvatar(
-                              radius: 15,
-                              backgroundColor: Colors.grey.shade300,
-                              child: const Icon(
-                                Icons.camera_alt,
-                                size: 16,
-                                color: Colors.black,
+                          // Small camera icon in a circle - only visible in edit mode
+                          if (_isEditMode)
+                            InkWell(
+                              onTap: _pickImage,
+                              child: CircleAvatar(
+                                radius: 15,
+                                backgroundColor: Colors.grey.shade300,
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  size: 16,
+                                  color: Colors.black,
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                       const SizedBox(height: 20),
@@ -239,6 +224,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                         label: 'Name',
                         hintText: 'Enter your name',
                         controller: _nameController,
+                        enabled: _isEditMode,
                       ),
                       const SizedBox(height: 16),
 
@@ -248,14 +234,16 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                         hintText: 'Enter your email',
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
+                        enabled: _isEditMode,
                       ),
                       const SizedBox(height: 16),
 
                       // Job Role field
                       CommonTextField(
-                        label: 'Alternate Mobile Number',
-                        hintText: 'Enter your alternate mobile number',
+                        label: 'Alternate Phone Number',
+                        hintText: 'Enter your alternate phone number',
                         controller: _alternatePhoneController,
+                        enabled: _isEditMode,
                       ),
                       const SizedBox(height: 16),
 
@@ -274,7 +262,6 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                         children:
                             _genders.map((String gender) {
                               return ChoiceChip(
-                                
                                 label: Text(
                                   gender,
                                   style: TextStyle(
@@ -290,6 +277,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                                 selectedColor: AppColors.secondary700,
                                 backgroundColor: Colors.white,
                                 onSelected: (bool selected) {
+                                  if (!_isEditMode) return;
                                   setState(() {
                                     _selectedGender = selected ? gender : null;
                                   });
@@ -308,62 +296,46 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                                     width: 1,
                                   ),
                                 ),
+                                disabledColor: Colors.grey.shade100,
+                                // Disable the chip when not in edit mode
+                                // enabled: _isEditMode,
                               );
                             }).toList(),
                       ),
-                      Divider(
-                        color: Colors.grey.shade400,
-                        height: 24,
-                      ),
-                       SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.02,
-                      ),
-                      Text(
-                        'DRIVER DETAILS',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.withOpacity(0.9),
-                        ),
-                      ),
-                        SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.02,
-                      ),
-                      // Driver Experience
+                      const SizedBox(height: 16),
+
+                      // Current Address field
                       CommonTextField(
-                        label: 'Driver Experience',
-                        hintText: 'Enter your experience',
-                        controller: _driverExperienceController,
+                        label: 'Current Address',
+                        hintText: 'Enter your current address',
+                        controller: _currentAddressController,
+                        enabled: _isEditMode,
                       ),
                       const SizedBox(height: 16),
-                      // Driver Licence
+
+                      // Permanent Address field
                       CommonTextField(
-                        label: 'Driver Licence',
-                        hintText: 'Enter your driving licence',
-                        controller: _driverLicenceController,
+                        label: 'Permanent Address',
+                        hintText: 'Enter your permanent address',
+                        controller: _permanentAddressController,
+                        enabled: _isEditMode,
                       ),
                       const SizedBox(height: 16),
-                      // Vehicle Number Plate
-                      CommonTextField(
-                        label: 'Aadhar Card Number',
-                        hintText: 'Enter your aadhar card number',
-                        controller:  _aadharCardNumberController,
-                      ),
-                   
 
                       SizedBox(
                         height: MediaQuery.of(context).size.height * 0.17,
                       ),
 
-                      // Continue button
-                      SizedBox(
-                        width: double.infinity,
-                        child: CommonButton(
-                          label: 'Continue',
-                          isActive: isFormValid,
-                          onPressed: _onContinuePressed,
+                      // Continue button - only visible in edit mode
+                      if (_isEditMode)
+                        SizedBox(
+                          width: double.infinity,
+                          child: CommonButton(
+                            label: 'Continue',
+                            isActive: isFormValid,
+                            onPressed: _onContinuePressed,
+                          ),
                         ),
-                      ),
                       // Add bottom padding so the button is clear of keyboard
                       const SizedBox(height: 16),
                     ],

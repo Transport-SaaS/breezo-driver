@@ -8,12 +8,14 @@ class CommonTextField extends StatelessWidget {
   final TextEditingController controller;
   final TextInputType keyboardType;
   final ValueChanged<String>? onChanged;
+  final bool enabled;
 
   const CommonTextField({
     Key? key,
     required this.label,
     required this.hintText,
     required this.controller,
+    this.enabled = true,
     this.keyboardType = TextInputType.text,
     this.onChanged,
   }) : super(key: key);
@@ -37,6 +39,7 @@ class CommonTextField extends StatelessWidget {
           controller: controller,
           keyboardType: keyboardType,
           onChanged: onChanged,
+          enabled: enabled, // Apply the enabled property to the TextField
           decoration: InputDecoration(
             hintText: hintText,
             contentPadding: const EdgeInsets.symmetric(
@@ -46,6 +49,9 @@ class CommonTextField extends StatelessWidget {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
             ),
+            // Add a filled background when disabled for better visual feedback
+            filled: !enabled,
+            fillColor: enabled ? null : Colors.grey.shade100,
           ),
         ),
       ],

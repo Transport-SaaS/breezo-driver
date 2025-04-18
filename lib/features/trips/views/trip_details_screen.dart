@@ -1,9 +1,17 @@
 import 'package:breezodriver/core/utils/app_colors.dart';
 import 'package:breezodriver/core/utils/app_assets.dart';
 import 'package:breezodriver/features/trips/models/trip_model.dart';
+import 'package:breezodriver/features/trips/viewmodels/trip_details_viewmodel.dart';
+import 'package:breezodriver/features/trips/views/trip_map_view.dart';
+import 'package:breezodriver/features/trips/widgets/trip_bottom_sheet.dart';
+import 'package:breezodriver/widgets/common_button.dart';
+import 'package:breezodriver/widgets/info_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 import 'dart:ui';
+import 'package:breezodriver/features/trips/views/trip_rating_screen.dart';
+import 'package:breezodriver/features/trips/viewmodels/trip_rating_viewmodel.dart';
 
 class TripDetailsScreen extends StatefulWidget {
   final TripModel trip;
@@ -17,15 +25,58 @@ class TripDetailsScreen extends StatefulWidget {
 class _TripDetailsScreenState extends State<TripDetailsScreen> {
   // Keep track of the positions of the timeline dots
   final List<GlobalKey> _timelineDotKeys = [];
-  
+  bool _showMapView = false;
+  late TripDetailsViewModel _viewModel;
+  bool _hasNavigatedToRating = false;
+
   @override
   void initState() {
     super.initState();
+    // Create the view model directly
+    _viewModel = TripDetailsViewModel(widget.trip);
+    
+    // Add listener to rebuild UI when viewModel changes
+    _viewModel.addListener(_onViewModelChanged);
+    
     // Initialize keys for each timeline point (start + passengers + destination)
     _timelineDotKeys.clear();
     for (int i = 0; i < widget.trip.passengerList.length + 2; i++) {
       _timelineDotKeys.add(GlobalKey());
     }
+  }
+  
+  void _onViewModelChanged() {
+    if (mounted) {
+      // Check if we need to navigate to rating screen
+      if (_viewModel.status == TripStatus.completed && !_hasNavigatedToRating) {
+        _hasNavigatedToRating = true;
+        
+        // Use a post-frame callback to avoid build errors
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          // Create a dedicated rating ViewModel
+          final ratingViewModel = TripRatingViewModel(_viewModel.trip);
+          
+          Navigator.push(
+            context, 
+            MaterialPageRoute(
+              builder: (context) => TripRatingScreen(viewModel: ratingViewModel),
+            ),
+          ).then((_) {
+            // Allow navigation again if the user comes back
+            _hasNavigatedToRating = false;
+          });
+        });
+      }
+      
+      setState(() {});
+    }
+  }
+  
+  @override
+  void dispose() {
+    _viewModel.removeListener(_onViewModelChanged);
+    _viewModel.dispose();
+    super.dispose();
   }
 
   @override
@@ -41,7 +92,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Trip ID: ${widget.trip.id}',
+          'Trip ID: ${_viewModel.trip.id}',
           style: const TextStyle(
             color: Colors.black,
             fontSize: 18,
@@ -52,9 +103,13 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
           Container(
             margin: const EdgeInsets.only(right: 16),
             child: OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.map_outlined),
-              label: const Text('Map View'),
+              onPressed: () {
+                setState(() {
+                  _showMapView = !_showMapView;
+                });
+              },
+              icon: Icon(_showMapView ? Icons.list : Icons.map_outlined),
+              label: Text(_showMapView ? 'List View' : 'Map View'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primarycolor,
                 side: BorderSide(color: AppColors.primarycolor),
@@ -64,43 +119,65 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
               ),
             ),
           ),
+          // DEV/TEST ONLY: Simulation button
+          if (const bool.fromEnvironment('dart.vm.product') == false)
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              child: IconButton(
+                onPressed: () {
+                  // Simulate trip completion for testing
+                  setState(() {
+                    _viewModel.simulateAllPickupsComplete();
+                  });
+                },
+                icon: const Icon(Icons.fast_forward),
+                tooltip: 'Simulate trip completion',
+              ),
+            ),
         ],
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Assigned at: ${widget.trip.assignedAt}',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
+          if (!_showMapView)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Assigned at: ${_viewModel.trip.assignedAt}',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-              ],
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
-          ),
-          
-          // Trip timeline
+
+          // Main content area - conditionally show timeline or map
           Expanded(
-            child: _buildTripTimeline(),
+            child:
+                _showMapView
+                    ? TripMapView(
+                      trip: _viewModel.trip,
+                      viewModel: _viewModel,
+                    )
+                    : _buildTripTimeline(_viewModel),
           ),
-          
-          // Bottom sheet
-          _buildBottomActionSheet(),
+
+          // Bottom sheet - use the extracted widget
+          TripBottomSheet(viewModel: _viewModel),
         ],
       ),
     );
   }
 
-  Widget _buildTripTimeline() {
-    // Determine which passengers have been picked up (for demo, assume first two are picked up)
-    final int pickedUpCount = 2; // This could be dynamic based on trip status
-    
+  Widget _buildTripTimeline(TripDetailsViewModel viewModel) {
+    // Determine which passengers have been picked up based on trip status
+    int pickedUpCount = viewModel.status == TripStatus.assigned ? 0 : 2;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -111,57 +188,64 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
           child: Column(
             children: [
               // First dot (Start)
-              _buildTimelineDot(isCompleted: true, isFirst: true, key: _timelineDotKeys[0]),
-              
+              _buildTimelineDot(
+                isCompleted: true,
+                isFirst: true,
+                key: _timelineDotKeys[0],
+              ),
+
               // Line from Start to first passenger
               _buildTimelineLine(
-                isCompleted: true, 
-                startKey: _timelineDotKeys[0], 
-                endKey: _timelineDotKeys[1]
+                isCompleted: true,
+                startKey: _timelineDotKeys[0],
+                endKey: _timelineDotKeys[1],
               ),
-              
+
               // Generate dots and lines for passengers
-              ...List.generate(widget.trip.passengerList.length, (index) {
+              ...List.generate(viewModel.trip.passengerList.length, (index) {
                 final bool isPickedUp = index < pickedUpCount;
-                final bool isLast = index == widget.trip.passengerList.length - 1;
-                final int dotKeyIndex = index + 1; // +1 because index 0 is the start
-                
+                final bool isLast =
+                    index == viewModel.trip.passengerList.length - 1;
+                final int dotKeyIndex =
+                    index + 1; // +1 because index 0 is the start
+
                 return Column(
                   children: [
                     // Passenger dot
                     _buildTimelineDot(
-                      isCompleted: isPickedUp, 
-                      key: _timelineDotKeys[dotKeyIndex]
+                      isCompleted: isPickedUp,
+                      key: _timelineDotKeys[dotKeyIndex],
                     ),
-                    
+
                     // Line to next stop (if not the last passenger)
-                    if (!isLast) 
+                    if (!isLast)
                       _buildTimelineLine(
                         isCompleted: index < pickedUpCount - 1,
                         startKey: _timelineDotKeys[dotKeyIndex],
-                        endKey: _timelineDotKeys[dotKeyIndex + 1]
+                        endKey: _timelineDotKeys[dotKeyIndex + 1],
                       ),
                   ],
                 );
               }),
-              
+
               // Line to destination
               _buildTimelineLine(
                 isCompleted: false,
-                startKey: _timelineDotKeys[widget.trip.passengerList.length],
-                endKey: _timelineDotKeys[widget.trip.passengerList.length + 1]
+                startKey: _timelineDotKeys[viewModel.trip.passengerList.length],
+                endKey:
+                    _timelineDotKeys[viewModel.trip.passengerList.length + 1],
               ),
-              
+
               // Last dot (Destination)
               _buildTimelineDot(
-                isCompleted: false, 
+                isCompleted: false,
                 isLast: true,
-                key: _timelineDotKeys[widget.trip.passengerList.length + 1]
+                key: _timelineDotKeys[viewModel.trip.passengerList.length + 1],
               ),
             ],
           ),
         ),
-        
+
         // Right column with the content
         Expanded(
           child: ListView(
@@ -170,31 +254,35 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
             children: [
               // Start location
               _buildTimelineItem(
-                time: widget.trip.startTime,
+                time: viewModel.trip.startTime,
                 title: 'Start',
-                address: widget.trip.startAddress,
+                address: viewModel.trip.startAddress,
                 isStart: true,
                 isEnd: false,
                 isCompleted: true,
                 isLast: false,
               ),
-              
+
               // Passengers
-              ...List.generate(widget.trip.passengerList.length, (index) {
-                final passenger = widget.trip.passengerList[index];
+              ...List.generate(viewModel.trip.passengerList.length, (index) {
+                final passenger = viewModel.trip.passengerList[index];
                 final bool isPickedUp = index < pickedUpCount;
-                
+
                 return _buildPassengerItem(
                   passenger: passenger,
                   isPickedUp: isPickedUp,
+                  showCallButton:
+                      viewModel.status == TripStatus.accepted ||
+                      viewModel.status == TripStatus.readyToStart ||
+                      viewModel.status == TripStatus.inProgress,
                 );
               }),
-              
+
               // Destination
               _buildTimelineItem(
-                time: widget.trip.endTime,
+                time: viewModel.trip.endTime,
                 title: 'Destination',
-                address: widget.trip.endAddress,
+                address: viewModel.trip.endAddress,
                 isStart: false,
                 isEnd: true,
                 isCompleted: false,
@@ -208,14 +296,14 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   }
 
   Widget _buildTimelineDot({
-    required bool isCompleted, 
-    bool isFirst = false, 
+    required bool isCompleted,
+    bool isFirst = false,
     bool isLast = false,
-    Key? key
+    Key? key,
   }) {
     final Color activeColor = const Color(0xFF00BFA5); // Teal color
     final Color inactiveColor = Colors.grey.shade300;
-    
+
     return Container(
       key: key,
       width: 10,
@@ -229,16 +317,16 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   }
 
   Widget _buildTimelineLine({
-    required bool isCompleted, 
-    GlobalKey? startKey, 
-    GlobalKey? endKey
+    required bool isCompleted,
+    GlobalKey? startKey,
+    GlobalKey? endKey,
   }) {
     final Color activeColor = const Color(0xFF00BFA5); // Teal color
     final Color inactiveColor = Colors.grey.shade300;
-    
+
     // Default height if we can't measure
     double lineHeight = 50;
-    
+
     // Calculate height based on the position of the two dots if keys are provided
     if (startKey != null && endKey != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -246,16 +334,20 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
           // This will update after the first build when widgets have been laid out
           // and we can calculate actual positions
           try {
-            final RenderBox? startBox = startKey.currentContext?.findRenderObject() as RenderBox?;
-            final RenderBox? endBox = endKey.currentContext?.findRenderObject() as RenderBox?;
-            
+            final RenderBox? startBox =
+                startKey.currentContext?.findRenderObject() as RenderBox?;
+            final RenderBox? endBox =
+                endKey.currentContext?.findRenderObject() as RenderBox?;
+
             if (startBox != null && endBox != null) {
               final Offset startPos = startBox.localToGlobal(Offset.zero);
               final Offset endPos = endBox.localToGlobal(Offset.zero);
-              
+
               // Calculate the distance between the centers of the dots
-              lineHeight = (endPos.dy - startPos.dy).abs() - 20; // Subtract dot heights + margins
-              
+              lineHeight =
+                  (endPos.dy - startPos.dy).abs() -
+                  20; // Subtract dot heights + margins
+
               // Ensure minimum height
               if (lineHeight < 20) lineHeight = 20;
             }
@@ -266,7 +358,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
         });
       });
     }
-    
+
     return Container(
       width: 2,
       height: lineHeight,
@@ -284,9 +376,9 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
     required bool isLast,
   }) {
     // Using teal color for active items as shown in the screenshot
-    final Color activeColor = const Color(0xFF00BFA5);
+    final Color activeColor = AppColors.primarycolor;
     final Color inactiveColor = Colors.grey.shade400;
-    
+
     return Padding(
       padding: const EdgeInsets.only(right: 16, bottom: 30),
       child: Row(
@@ -298,7 +390,10 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
             height: 24,
             margin: const EdgeInsets.only(top: 2),
             decoration: BoxDecoration(
-              color: isCompleted ? activeColor.withOpacity(0.2) : Colors.grey.shade100,
+              color:
+                  isCompleted
+                      ? activeColor.withOpacity(0.2)
+                      : Colors.grey.shade100,
               shape: BoxShape.circle,
               border: Border.all(
                 color: isCompleted ? activeColor : inactiveColor,
@@ -306,30 +401,31 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
               ),
             ),
             child: Center(
-              child: isStart 
-                  ? SvgPicture.asset(
-                      AppAssets.homeSchedule,
-                      width: 14,
-                      height: 14,
-                      color: isCompleted ? activeColor : inactiveColor,
-                    )
-                  : isEnd
+              child:
+                  isStart
                       ? SvgPicture.asset(
-                          AppAssets.business,
-                          width: 14,
-                          height: 14,
-                          color: isCompleted ? activeColor : inactiveColor,
-                        )
+                        AppAssets.homeSchedule,
+                        width: 14,
+                        height: 14,
+                        color: isCompleted ? activeColor : inactiveColor,
+                      )
+                      : isEnd
+                      ? SvgPicture.asset(
+                        AppAssets.business,
+                        width: 14,
+                        height: 14,
+                        color: isCompleted ? activeColor : inactiveColor,
+                      )
                       : Icon(
-                          Icons.location_on_outlined,
-                          size: 14,
-                          color: isCompleted ? activeColor : inactiveColor,
-                        ),
+                        Icons.location_on_outlined,
+                        size: 14,
+                        color: isCompleted ? activeColor : inactiveColor,
+                      ),
             ),
           ),
-          
+
           const SizedBox(width: 12),
-          
+
           // Middle: Content (Title and Address)
           Expanded(
             child: Column(
@@ -345,25 +441,19 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   address,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
               ],
             ),
           ),
-          
+
           // Right side: Time
           Container(
             width: 52,
             margin: const EdgeInsets.only(top: 4),
             child: Text(
               time,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               textAlign: TextAlign.right,
             ),
           ),
@@ -375,6 +465,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   Widget _buildPassengerItem({
     required Passenger passenger,
     required bool isPickedUp,
+    bool showCallButton = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(right: 16, bottom: 30),
@@ -400,9 +491,9 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
               ),
             ),
           ),
-          
+
           const SizedBox(width: 12),
-          
+
           // Middle: Content (Name and Address)
           Expanded(
             child: Column(
@@ -418,27 +509,47 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   passenger.address,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
               ],
             ),
           ),
-          
-          // Right side: Time
-          Container(
-            width: 52,
-            margin: const EdgeInsets.only(top: 4),
-            child: Text(
-              passenger.pickupTime,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
+
+          // Right side: Call button and time
+          Row(
+            children: [
+              // Only show call button if trip is accepted/in progress
+              if (showCallButton)
+                Container(
+                  height: 32,
+                  width: 32,
+                  margin: const EdgeInsets.only(top: 0, right: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primarycolorDark,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    icon: const Icon(Icons.call, color: Colors.white, size: 18),
+                    onPressed: () {
+                      // Handle call action
+                    },
+                  ),
+                ),
+
+              Container(
+                width: 52,
+                margin: const EdgeInsets.only(top: 4),
+                child: Text(
+                  passenger.pickupTime,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                  textAlign: TextAlign.right,
+                ),
               ),
-              textAlign: TextAlign.right,
-            ),
+            ],
           ),
         ],
       ),
@@ -455,212 +566,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       'KE': Color(0xFF10B981), // Green
       'MV': Color(0xFF3B82F6), // Blue
     };
-    
+
     return colorMap[initials] ?? Colors.blue;
-  }
-
-  Widget _buildBottomActionSheet() {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(12),
-          topRight: Radius.circular(12),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x1A000000),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Wait or start message - with rounded corners
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: const BoxDecoration(
-              color: Color(0xFF7F1D1D), // Dark red color from screenshot
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Wait or start the next trip!',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Row(
-                    children: [
-                      const Text(
-                        'Delay',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildTimeDigit('0'),
-                      _buildTimeDigit('0'),
-                      const Text(
-                        ':',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      _buildTimeDigit('0'),
-                      _buildTimeDigit('2'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Pickup route info
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Pickup Route',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    _buildRouteInfoChip(Icons.access_time, '01h 13m'),
-                    const SizedBox(width: 8),
-                    _buildRouteInfoChip(Icons.directions_car_outlined, '20 kms'),
-                    const SizedBox(width: 8),
-                    _buildRouteInfoChip(Icons.people_outline, '4'),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                
-                // Action buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[100],
-                          foregroundColor: Colors.red,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Reject',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF00BFA5), // Teal color from screenshot
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Accept',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimeDigit(String digit) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 1),
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(2),
-      ),
-      child: Text(
-        digit,
-        style: const TextStyle(
-          color: Color(0xFF7F1D1D), // Dark red color from screenshot
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRouteInfoChip(IconData icon, String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade300, width: 0.5),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: Colors.grey[700]),
-          const SizedBox(width: 6),
-          Text(
-            text,
-            style: TextStyle(
-              color: Colors.grey[700],
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

@@ -41,15 +41,15 @@ class ProfileScreen extends StatelessWidget {
                               onTap: () {
                                 Navigator.pop(context);
                               },
-                              child: Icon(Icons.arrow_back, color: Colors.black)),
-                            SizedBox(width: 30),
+                              child: const Icon(Icons.arrow_back, color: Colors.black)),
+                            const SizedBox(width: 30),
                             Image.asset(
                               'assets/images/logo.png',
                               width: 82,
                               height: 82,
                             ),
-                            SizedBox(width: 20),
-                            Text(
+                            const SizedBox(width: 20),
+                            const Text(
                               "Driver App",
                               style: TextStyle(
                                 fontSize: 20,

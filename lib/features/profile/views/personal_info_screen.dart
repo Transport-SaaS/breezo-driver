@@ -1,5 +1,6 @@
 import 'package:breezodriver/core/utils/app_colors.dart';
 import 'package:breezodriver/features/auth/views/select_home_location.dart';
+import 'package:breezodriver/features/profile/viewmodels/driver_viewmodel.dart';
 import 'package:breezodriver/widgets/common_button.dart';
 import 'package:breezodriver/widgets/common_textfield.dart';
 import 'package:breezodriver/widgets/progress_bar.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 // For picking images from gallery/camera
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 
 // import 'select_location_screen.dart';
@@ -34,7 +36,10 @@ class _PersonalProfileDetailsScreenState extends State<PersonalProfileDetailsScr
 
   // Avatar image
   XFile? _pickedImage;
-  
+
+  // Add loading state
+  bool _isLoading = true;
+
   // Add a flag to track edit mode
   bool _isEditMode = false;
 
@@ -64,7 +69,7 @@ class _PersonalProfileDetailsScreenState extends State<PersonalProfileDetailsScr
 
   void _onContinuePressed() {
     if (!isFormValid || !_isEditMode) return;
-    // TODO: Handle form submission logic, then navigate or do next steps
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Profile completed for: ${_nameController.text}')),
     );
@@ -75,6 +80,56 @@ class _PersonalProfileDetailsScreenState extends State<PersonalProfileDetailsScr
             (context) => const SelectLocationScreen(isFromAllAddress: false),
       ),
     );
+  }
+
+  Future<void> _saveProfile() async {
+    if (!isFormValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all required fields')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Convert gender to API format (m/f/o)
+    String genderCode = 'o';
+    if (_selectedGender == 'Male') {
+      genderCode = 'm';
+    } else if (_selectedGender == 'Female') {
+      genderCode = 'f';
+    }
+
+    final driverViewModel = Provider.of<DriverViewModel>(
+      context,
+      listen: false,
+    );
+    final success = await driverViewModel.saveProfile(
+      name: _nameController.text,
+      email: _emailController.text.trim(),
+      gender: genderCode,
+      profilePic: null,
+      aadharNumber: _aadharCardNumberController.text,
+      licenseNumber: '',
+      experienceYears: 0,
+      contractStartDate: DateTime.now(),
+    );
+
+    setState(() {
+      _isLoading = false;
+      if (success) {
+        // _isEditing = false;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile saved successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to save profile')));
+      }
+    });
   }
 
   // Toggle edit mode
@@ -104,8 +159,7 @@ class _PersonalProfileDetailsScreenState extends State<PersonalProfileDetailsScr
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(height: 20,),
-           
+            const SizedBox(height: 20,),
             Expanded(
               child: Container(
                 width: double.infinity,
@@ -131,7 +185,7 @@ class _PersonalProfileDetailsScreenState extends State<PersonalProfileDetailsScr
                             onTap: () {
                               Navigator.pop(context);
                             },
-                            child: Icon(Icons.arrow_back, color: Colors.black),
+                            child: const Icon(Icons.arrow_back, color: Colors.black),
                           ),
                           const SizedBox(width: 10),
                           const Text(
@@ -161,7 +215,7 @@ class _PersonalProfileDetailsScreenState extends State<PersonalProfileDetailsScr
                                   size: 16,
                                   color: _isEditMode ? AppColors.secondary700 : Colors.grey, 
                                 ),
-                                SizedBox(width: 4),
+                                const SizedBox(width: 4),
                                 Text(
                                   _isEditMode ? 'Done' : 'Edit',
                                   style: TextStyle(

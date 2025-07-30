@@ -1,7 +1,6 @@
 // lib/views/screens/phone_number_screen.dart
 
 import 'package:breezodriver/core/utils/app_colors.dart';
-import 'package:breezodriver/features/auth/viewmodels/otp_viewmodel.dart';
 import 'package:breezodriver/widgets/common_button.dart';
 import 'package:breezodriver/widgets/custom_loader.dart';
 import 'package:breezodriver/widgets/progress_bar.dart';
@@ -10,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../viewmodels/auth_viewmodel.dart';
 import 'otp_screen.dart';
 
 class PhoneNumberScreen extends StatefulWidget {
@@ -52,8 +52,8 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
     setState(() => _isLoading = true);
     
     try {
-      final viewModel = context.read<OtpViewModel>();
-      final success = await viewModel.generateOTP(_phoneController.text.trim());
+      final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+      final success = await authViewModel.generateOTP(_phoneController.text.trim());
       
       if (success) {
         if (mounted) {

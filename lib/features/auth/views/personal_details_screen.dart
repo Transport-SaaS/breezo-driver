@@ -1,5 +1,7 @@
 import 'package:breezodriver/core/utils/app_colors.dart';
 import 'package:breezodriver/features/auth/views/select_home_location.dart';
+import 'package:breezodriver/features/profile/models/driver_model.dart';
+import 'package:breezodriver/features/profile/viewmodels/driver_viewmodel.dart';
 import 'package:breezodriver/widgets/common_button.dart';
 import 'package:breezodriver/widgets/common_textfield.dart';
 import 'package:breezodriver/widgets/progress_bar.dart';
@@ -8,16 +10,15 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 // For picking images from gallery/camera
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 
 // import 'select_location_screen.dart';
 
 class PersonalDetailsScreen extends StatefulWidget {
-  final Map<String, dynamic>? profileData;
-  
+
   const PersonalDetailsScreen({
-    Key? key, 
-    this.profileData,
+    Key? key
   }) : super(key: key);
 
   @override
@@ -32,7 +33,6 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
   final _driverExperienceController = TextEditingController();
   final _driverLicenceController = TextEditingController();
   final _aadharCardNumberController = TextEditingController();
-
   // Gender dropdown
   final List<String> _genders = ['Male', 'Female', 'Other'];
   String? _selectedGender;
@@ -46,18 +46,20 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
     _initializeData();
   }
 
-  void _initializeData() {
-    if (widget.profileData != null) {
-      final data = widget.profileData!;
-      _nameController.text = data['name'] ?? '';
-      _driverExperienceController.text = data['experience']?.toString() ?? '';
-      _driverLicenceController.text = data['licenseNum'] ?? '';
-      _aadharCardNumberController.text = data['aadharNum'] ?? '';
+  Future<void> _initializeData() async {
+    final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
+    await driverViewModel.loadDriverData();
+    if (driverViewModel.driverProfile != null) {
+      final data = driverViewModel.driverProfile!;
+      _nameController.text = data.name ?? '';
+      _driverExperienceController.text = data.experienceYears.toString() ?? '';
+      _driverLicenceController.text = data.licenseNumber ?? '';
+      _aadharCardNumberController.text = data.aadharNumber ?? '';
       
       // Handle gender
-      if (data['gender'] == 'M') {
+      if (data.gender == 'M' || data.gender == 'm') {
         _selectedGender = 'Male';
-      } else if (data['gender'] == 'F') {
+      } else if (data.gender == 'F' || data.gender == 'f') {
         _selectedGender = 'Female';
       }
       

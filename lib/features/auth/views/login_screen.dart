@@ -100,11 +100,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     ),
                     const SizedBox(height: 24),
-                    if (authViewModel.error != null)
+                    if (authViewModel.errorMessage != '')
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16.0),
                         child: Text(
-                          authViewModel.error!,
+                          authViewModel.errorMessage,
                           style: const TextStyle(color: Colors.red),
                           textAlign: TextAlign.center,
                         ),

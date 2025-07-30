@@ -1,16 +1,16 @@
 import 'package:breezodriver/core/utils/app_colors.dart';
-import 'package:breezodriver/features/auth/viewmodels/otp_viewmodel.dart';
+import 'package:breezodriver/features/profile/viewmodels/driver_viewmodel.dart';
 import 'package:breezodriver/widgets/common_button.dart';
 import 'package:breezodriver/widgets/custom_loader.dart';
 import 'package:breezodriver/widgets/progress_bar.dart';
 import 'package:cherry_toast/cherry_toast.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:pinput/pinput.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
+import '../viewmodels/auth_viewmodel.dart';
 import 'personal_details_screen.dart';
 
 class OtpScreen extends StatefulWidget {
@@ -47,9 +47,10 @@ class _OtpScreenState extends State<OtpScreen> {
       return;
     }
 
-    final viewModel = context.read<OtpViewModel>();
-    final success = await viewModel.verifyOTP(_otpController.text.trim());
-    
+    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+    final success = await authViewModel.verifyOTP(_otpController.text.trim());
+
+    final viewModel = Provider.of<DriverViewModel>(context, listen: false);
     if (success) {
       if (mounted) {
         CherryToast.info(
@@ -60,7 +61,7 @@ class _OtpScreenState extends State<OtpScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          iconWidget: Icon(Icons.check_circle, color: Colors.green),
+          iconWidget: const Icon(Icons.check_circle, color: Colors.green),
           inheritThemeColors: true,
           actionHandler: () {},
           onToastClosed: () {
@@ -68,29 +69,26 @@ class _OtpScreenState extends State<OtpScreen> {
           },
         ).show(context);
           // Navigate based on driver status
-            if (viewModel.isDriverOnboarded) {
-              // Navigate to home screen or dashboard
-              // Navigator.pushReplacementNamed(context, '/home');
-              // Fix the navigation - previously missing Navigator.pushReplacement
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PersonalDetailsScreen(
-                    profileData: viewModel.driverProfile,
-                  ),
-                ),
-              );
-            } else {
-              // Navigate to personal details screen with profile data if available
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PersonalDetailsScreen(
-                    profileData: viewModel.driverProfile,
-                  ),
-                ),
-              );
-            }
+        viewModel.loadDriverData();
+        if (viewModel.hasOpenAccount) {
+          // Navigate to home screen or dashboard
+          // Navigator.pushReplacementNamed(context, '/home');
+          // Fix the navigation - previously missing Navigator.pushReplacement
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const PersonalDetailsScreen(),
+            ),
+          );
+        } else {
+          // Navigate to personal details screen with profile data if available
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const PersonalDetailsScreen(),
+            ),
+          );
+        }
       }
     } else {
       if (mounted) {
@@ -102,7 +100,7 @@ class _OtpScreenState extends State<OtpScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          iconWidget: Icon(Icons.error_outline, color: Colors.red),
+          iconWidget: const Icon(Icons.error_outline, color: Colors.red),
           inheritThemeColors: true,
           actionHandler: () {},
           onToastClosed: () {},
@@ -113,7 +111,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch<OtpViewModel>();
+    final viewModel = Provider.of<AuthViewModel>(context, listen: false);
     
     return Scaffold(
       backgroundColor: AppColors.primarycolor,
@@ -125,9 +123,9 @@ class _OtpScreenState extends State<OtpScreen> {
             Column(
               children: [
                 // Top progress bar area.
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
-                  child: const ProgressBar(currentStep: 2),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 16),
+                  child: ProgressBar(currentStep: 2),
                 ),
                 // White container that fills the remaining space.
                 Expanded(
@@ -161,7 +159,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                     onTap: () {
                                       Navigator.pop(context);
                                     },
-                                    child: Icon(
+                                    child: const Icon(
                                       Icons.arrow_back,
                                       color: Colors.black,
                                     ),

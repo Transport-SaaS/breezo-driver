@@ -1,6 +1,7 @@
 class EnvConfig {
-  static const String apiBaseUrl = 'http://transport-test-backend.ap-south-1.elasticbeanstalk.com:8090';
-  
+  // static const String apiBaseUrl = 'http://transport-test-backend.ap-south-1.elasticbeanstalk.com:8090';
+  // static const String apiBaseUrl = 'http://10.0.2.2:8090';
+
   // Add other environment variables here
   static const int connectTimeout = 30000;
   static const int receiveTimeout = 30000;

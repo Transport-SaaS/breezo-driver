@@ -4,13 +4,10 @@ import 'package:breezodriver/features/auth/viewmodels/location_viewmodel.dart';
 import 'package:breezodriver/features/auth/views/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'core/services/service_locator.dart';
-import 'core/utils/app_routes.dart';
 import 'features/auth/viewmodels/auth_viewmodel.dart';
 import 'features/home/viewmodels/home_viewmodel.dart';
 import 'features/trips/viewmodels/trip_details_viewmodel.dart';
-import 'features/auth/viewmodels/otp_viewmodel.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -27,13 +24,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => getIt<AuthViewModel>()),
-        ChangeNotifierProvider(create: (_) => getIt<HomeViewModel>()),
-        ChangeNotifierProvider(create: (_) => getIt<LocationViewModel>()),
-        ChangeNotifierProvider(create: (_) => getIt<BusinessViewModel>()),
-        ChangeNotifierProvider(create: (_) => getIt<TripDetailsViewModel>()),
-        ChangeNotifierProvider(create: (_) => getIt<OtpViewModel>()),
-        
+        ChangeNotifierProvider(create: (_) => serviceLocator<AuthViewModel>()),
+        ChangeNotifierProvider(create: (_) => serviceLocator<HomeViewModel>()),
+        ChangeNotifierProvider(create: (_) => serviceLocator<LocationViewModel>()),
+        ChangeNotifierProvider(create: (_) => serviceLocator<BusinessViewModel>()),
+        ChangeNotifierProvider(create: (_) => serviceLocator<TripDetailsViewModel>()),
       ],
       child: MaterialApp(
         title: 'Breezo Driver',

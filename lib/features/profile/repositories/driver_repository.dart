@@ -1,3 +1,4 @@
+import 'package:breezodriver/features/profile/models/transporter_office_model.dart';
 import 'package:dio/dio.dart';
 
 import '../../../core/config/api_endpoints.dart';
@@ -72,6 +73,66 @@ class DriverRepository {
     }
   }
 
+  /// Save driver profile
+  /// Returns true if profile was successfully saved
+  Future<bool> saveProfile({
+    required String name,
+    required DateTime dateOfBirth,
+    required String? email,
+    required String gender,
+    required int experienceYears,
+    required String licenseNumber,
+    required String aadharNumber,
+    String? alternatePhoneNum,
+    final DateTime? contractStartDate,
+    final DateTime? contractEndDate,
+    final String? profilePic,
+  }) async {
+    try {
+      // Get the token to ensure we're authenticated
+      final token = await _secureStorage.getAccessToken();
+      if (token == null || token.isEmpty) {
+        print('DriverRepository: No auth token available');
+        return false;
+      }
+
+      final Map<String, dynamic> profileData = {
+        "name": name,
+        "dateOfBirth": dateOfBirth.toIso8601String(),
+        "gender": gender,
+        "profilePic": profilePic,
+        "experience": experienceYears,
+        "licenseNum": licenseNumber,
+        "aadharNum": aadharNumber,
+        "alternatePhoneNum": alternatePhoneNum,
+        "contractStartDate": contractStartDate?.toIso8601String(),
+        "contractEndDate": contractEndDate,
+      };
+
+      final response = await _apiClient.post(
+        endpoint: ApiEndpoints.saveProfile,
+        data: profileData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      // Check for successful response
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('Profile saved successfully');
+        return true;
+      } else {
+        print('DriverRepository saveProfile error: Status ${response.statusCode}, Body: ${response.data}');
+        return false;
+      }
+    } catch (e) {
+      print('Error during saveProfile: $e');
+      return false;
+    }
+  }
+
   /// Save driver address
   /// Returns true if address was successfully saved
   Future<bool> saveAddress({
@@ -127,36 +188,36 @@ class DriverRepository {
 
   /// Get driver company details
   /// Returns CompanyDetails with company information
-  // Future<CompanyDetails?> getDriverCompanyDetails() async {
-  //   try {
-  //     // Get the token to ensure we're authenticated
-  //     final token = await _secureStorage.getAccessToken();
-  //     if (token == null || token.isEmpty) {
-  //       print('DriverRepository: No auth token available');
-  //       return null;
-  //     }
-  //
-  //     final response = await _apiClient.get(
-  //       endpoint: ApiEndpoints.getDriverCompanyDetails,
-  //       options: Options(
-  //         headers: {
-  //           'Authorization': 'Bearer $token',
-  //         },
-  //       ),
-  //     );
-  //
-  //     // Check for successful response
-  //     if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
-  //       return CompanyDetails.fromJson(response.data);
-  //     } else {
-  //       print('DriverRepository getDriverCompanyDetails error: Status ${response.statusCode}, Body: ${response.data}');
-  //       return null;
-  //     }
-  //   } catch (e) {
-  //     print('Error during getDriverCompanyDetails: $e');
-  //     return null;
-  //   }
-  // }
+  Future<TransporterOfficeModel?> getDriverTransporterOffice() async {
+    try {
+      // Get the token to ensure we're authenticated
+      final token = await _secureStorage.getAccessToken();
+      if (token == null || token.isEmpty) {
+        print('DriverRepository: No auth token available');
+        return null;
+      }
+
+      final response = await _apiClient.get(
+        endpoint: ApiEndpoints.getDriverOfficeDetails,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      // Check for successful response
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return TransporterOfficeModel.fromJson(response.data);
+      } else {
+        print('DriverRepository getDriverCompanyDetails error: Status ${response.statusCode}, Body: ${response.data}');
+        return null;
+      }
+    } catch (e) {
+      print('Error during getDriverCompanyDetails: $e');
+      return null;
+    }
+  }
 
   /// Get default working schedule
   /// Returns WorkingSchedule with days and times
@@ -302,62 +363,6 @@ class DriverRepository {
       }
     } catch (e) {
       print('Error during saveDefaultWorkingSchedule: $e');
-      return false;
-    }
-  }
-
-  /// Save driver profile
-  /// Returns true if profile was successfully saved
-  Future<bool> saveProfile({
-    required String name,
-    required String email,
-    required String gender,
-    required int experienceYears,
-    required String licenseNumber,
-    required String aadharNumber,
-    final DateTime? contractStartDate,
-    final int? contractDurationMonths,
-    final String? profilePic,
-  }) async {
-    try {
-      // Get the token to ensure we're authenticated
-      final token = await _secureStorage.getAccessToken();
-      if (token == null || token.isEmpty) {
-        print('DriverRepository: No auth token available');
-        return false;
-      }
-
-      final Map<String, dynamic> profileData = {
-          "name": name,
-          "gender": gender,
-          "profilePic": profilePic,
-          "experience": experienceYears,
-          "licenseNum": licenseNumber,
-          "aadharNum": aadharNumber,
-          "contractStartDate": contractStartDate?.toIso8601String(),
-          "contractTenure": contractDurationMonths,
-      };
-
-      final response = await _apiClient.post(
-        endpoint: ApiEndpoints.saveProfile,
-        data: profileData,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-
-      // Check for successful response
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        print('Profile saved successfully');
-        return true;
-      } else {
-        print('DriverRepository saveProfile error: Status ${response.statusCode}, Body: ${response.data}');
-        return false;
-      }
-    } catch (e) {
-      print('Error during saveProfile: $e');
       return false;
     }
   }

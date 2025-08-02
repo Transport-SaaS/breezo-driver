@@ -108,11 +108,13 @@ class _PersonalProfileDetailsScreenState extends State<PersonalProfileDetailsScr
     );
     final success = await driverViewModel.saveProfile(
       name: _nameController.text,
+      dateOfBirth: DateTime.now(), // Placeholder, should be replaced with actual DOB input
       email: _emailController.text.trim(),
       gender: genderCode,
       profilePic: null,
       aadharNumber: _aadharCardNumberController.text,
       licenseNumber: '',
+      alternatePhoneNum: _alternatePhoneController.text.trim(),
       experienceYears: 0,
       contractStartDate: DateTime.now(),
     );

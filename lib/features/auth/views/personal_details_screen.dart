@@ -28,6 +28,7 @@ class PersonalDetailsScreen extends StatefulWidget {
 class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
   // Text controllers
   final _nameController = TextEditingController();
+  final _dateOfBirthController = TextEditingController();
   final _emailController = TextEditingController();
   final _alternatePhoneController = TextEditingController();
   final _driverExperienceController = TextEditingController();
@@ -40,6 +41,9 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
   // Avatar image
   XFile? _pickedImage;
 
+  // Loading state
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
@@ -47,6 +51,9 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
   }
 
   Future<void> _initializeData() async {
+    setState(() {
+      _isLoading = true;
+    });
     final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
     await driverViewModel.loadDriverData();
     if (driverViewModel.driverProfile != null) {
@@ -55,7 +62,10 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
       _driverExperienceController.text = data.experienceYears.toString() ?? '';
       _driverLicenceController.text = data.licenseNumber ?? '';
       _aadharCardNumberController.text = data.aadharNumber ?? '';
-      
+      _dateOfBirthController.text = data.dateOfBirth.toLocal().toString().split(' ')[0];
+      _emailController.text = data.email ?? '';
+      _alternatePhoneController.text = data.alternatePhoneNum ?? '';
+
       // Handle gender
       if (data.gender == 'M' || data.gender == 'm') {
         _selectedGender = 'Male';
@@ -66,6 +76,9 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
       // Note: profilePic handling would go here if needed
       // if (data['profilePic'] != null) { ... }
     }
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   /// Picks an image from camera or gallery
@@ -85,6 +98,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
   /// Determines if all fields are filled (for enabling the Continue button).
   bool get isFormValid {
     return _nameController.text.trim().isNotEmpty &&
+        _dateOfBirthController.text.trim().isNotEmpty &&
         _emailController.text.trim().isNotEmpty &&
         _alternatePhoneController.text.trim().isNotEmpty &&
         _driverExperienceController.text.trim().isNotEmpty &&
@@ -92,26 +106,82 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         _aadharCardNumberController.text.trim().isNotEmpty &&
         _selectedGender != null;
   }
+  
+  Future<bool> _saveProfile() async {
+    if (!isFormValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all required fields')),
+      );
+      return false;
+    }
 
-  void _onContinuePressed() {
-    if (!isFormValid) return;
-    // TODO: Handle form submission logic, then navigate or do next steps
-    CherryToast.info(
-      title: const Text('Data submitted successfully!'),
-      toastDuration: const Duration(seconds: 2),
-      iconWidget: const Icon(Icons.check_circle, color: Colors.green),
-      // enableIconAnimation: false,
-      disableToastAnimation: true,
+    setState(() {
+      _isLoading = true;
+    });
 
+    // Convert gender to API format (m/f/o)
+    String genderCode = 'o';
+    if (_selectedGender == 'Male') {
+      genderCode = 'm';
+    } else if (_selectedGender == 'Female') {
+      genderCode = 'f';
+    }
 
-    ).show(context);
-    Navigator.push(
+    final driverViewModel = Provider.of<DriverViewModel>(
       context,
-      MaterialPageRoute(
-        builder:
-            (context) => const SelectLocationScreen(isFromAllAddress: false),
-      ),
+      listen: false,
     );
+    final success = await driverViewModel.saveProfile(
+      name: _nameController.text,
+      dateOfBirth: DateTime.parse(_dateOfBirthController.text),
+      email: _emailController.text.trim(),
+      gender: genderCode,
+      profilePic: null,
+      aadharNumber: _aadharCardNumberController.text,
+      licenseNumber: _driverLicenceController.text,
+      alternatePhoneNum: _alternatePhoneController.text.isNotEmpty
+          ? _alternatePhoneController.text
+          : null,
+      experienceYears: int.tryParse(_driverExperienceController.text) ?? 0
+    );
+
+    setState(() {
+      _isLoading = false;
+      if (success) {
+        // _isEditing = false;
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   const SnackBar(content: Text('Profile saved successfully')),
+        // );
+        CherryToast.info(
+          title: const Text('Data submitted successfully!'),
+          toastDuration: const Duration(seconds: 2),
+          iconWidget: const Icon(Icons.check_circle, color: Colors.green),
+          // enableIconAnimation: false,
+          disableToastAnimation: true,
+
+
+        ).show(context);
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to save profile')));
+      }
+    });
+    return success;
+  }
+
+  Future<void> _onContinuePressed() async {
+    if (!isFormValid) return;
+    final success = await _saveProfile();
+    if(success && mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => const SelectLocationScreen(isFromAllAddress: false),
+        ),
+      );
+    }
   }
 
   @override
@@ -122,6 +192,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
     _driverExperienceController.dispose();
     _driverLicenceController.dispose();
     _aadharCardNumberController.dispose();
+    _dateOfBirthController.dispose();
     super.dispose();
   }
 
@@ -135,9 +206,9 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         child: Column(
           children: [
             // Progress bar & top title
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
-              child: const ProgressBar(currentStep: 3),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 16),
+              child: ProgressBar(currentStep: 3),
             ),
             Expanded(
               child: Container(
@@ -153,7 +224,9 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                     topRight: Radius.circular(20),
                   ),
                 ),
-                child: SingleChildScrollView(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator()) :
+                SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -243,7 +316,28 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                         controller: _nameController,
                       ),
                       const SizedBox(height: 16),
-
+                      // Date of Birth field
+                      CommonTextField(
+                        label: 'Date of Birth',
+                        hintText: 'Select your date of birth',
+                        controller: _dateOfBirthController,
+                        readOnly: true, // Make it read-only for date picker
+                        onTap: () async {
+                          final pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime(1960),
+                            lastDate: DateTime.now(),
+                          );
+                          if (pickedDate != null) {
+                            setState(() {
+                              _dateOfBirthController.text =
+                                  '${pickedDate.toLocal()}'.split(' ')[0];
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
                       // Email field
                       CommonTextField(
                         label: 'Company Email-ID',
@@ -351,10 +445,8 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                         hintText: 'Enter your aadhar card number',
                         controller:  _aadharCardNumberController,
                       ),
-                   
-
                       SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.17,
+                        height: MediaQuery.of(context).size.height * 0.12,
                       ),
 
                       // Continue button

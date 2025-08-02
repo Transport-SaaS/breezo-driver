@@ -160,7 +160,7 @@ class _ConfirmLocationScreenState extends State<ConfirmLocationScreen> {
                 child: Stack(
                   children: [
                     Container(
-                      padding: EdgeInsets.only(top: 7, bottom: 5),
+                      padding: const EdgeInsets.only(top: 7, bottom: 5),
                       width: double.infinity,
                       height: screenSize.height * 0.32,
                       decoration: const BoxDecoration(
@@ -169,7 +169,7 @@ class _ConfirmLocationScreenState extends State<ConfirmLocationScreen> {
                           top: Radius.circular(10),
                         ),
                       ),
-                      child: Text(
+                      child: const Text(
                         'This will be your default home address',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white, fontSize: 12),
@@ -243,7 +243,7 @@ class _ConfirmLocationScreenState extends State<ConfirmLocationScreen> {
                                             surfaceTintColor: Colors.white,
                                             shadowColor: Colors.transparent,
                                             shape: RoundedRectangleBorder(
-                                              side: BorderSide(
+                                              side: const BorderSide(
                                                 color: AppColors.primarycolor,
                                                 width: 1,
                                               ),
@@ -293,6 +293,8 @@ class _ConfirmLocationScreenState extends State<ConfirmLocationScreen> {
                                             placeName: widget.placeName,
                                             address: widget.address,
                                             isFromAllAddress: widget.isFromAllAddress,
+                                            lat: locationViewModel.selectedLocation.latitude,
+                                            lng: locationViewModel.selectedLocation.longitude,
                                           ),
                                         ),
                                   );

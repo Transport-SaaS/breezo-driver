@@ -2,6 +2,7 @@ import 'package:breezodriver/core/utils%20copy/size_config.dart';
 import 'package:breezodriver/features/auth/viewmodels/business_viewmodel.dart';
 import 'package:breezodriver/features/auth/viewmodels/location_viewmodel.dart';
 import 'package:breezodriver/features/auth/views/splash_screen.dart';
+import 'package:breezodriver/features/profile/viewmodels/driver_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/services/service_locator.dart';
@@ -24,11 +25,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => serviceLocator<AuthViewModel>()),
-        ChangeNotifierProvider(create: (_) => serviceLocator<HomeViewModel>()),
-        ChangeNotifierProvider(create: (_) => serviceLocator<LocationViewModel>()),
-        ChangeNotifierProvider(create: (_) => serviceLocator<BusinessViewModel>()),
-        ChangeNotifierProvider(create: (_) => serviceLocator<TripDetailsViewModel>()),
+        ChangeNotifierProvider(create: (_) => AuthViewModel()),
+        ChangeNotifierProvider(create: (_) => HomeViewModel()),
+        ChangeNotifierProvider(create: (_) => LocationViewModel()),
+        ChangeNotifierProvider(create: (_) => BusinessViewModel()),
+        ChangeNotifierProvider(create: (_) => DriverViewModel()),
       ],
       child: MaterialApp(
         title: 'Breezo Driver',

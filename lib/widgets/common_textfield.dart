@@ -9,6 +9,8 @@ class CommonTextField extends StatelessWidget {
   final TextInputType keyboardType;
   final ValueChanged<String>? onChanged;
   final bool enabled;
+  final bool readOnly;
+  final Function()? onTap;
 
   const CommonTextField({
     Key? key,
@@ -18,6 +20,8 @@ class CommonTextField extends StatelessWidget {
     this.enabled = true,
     this.keyboardType = TextInputType.text,
     this.onChanged,
+    this.readOnly = false,
+    this.onTap,
   }) : super(key: key);
 
   @override
@@ -40,6 +44,8 @@ class CommonTextField extends StatelessWidget {
           keyboardType: keyboardType,
           onChanged: onChanged,
           enabled: enabled, // Apply the enabled property to the TextField
+          readOnly: readOnly,
+          onTap: onTap,
           decoration: InputDecoration(
             hintText: hintText,
             contentPadding: const EdgeInsets.symmetric(

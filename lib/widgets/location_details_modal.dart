@@ -1,7 +1,9 @@
 // import 'package:breezoapp1/views/screens/office_details_screen.dart';
 import 'package:breezodriver/core/utils/app_colors.dart';
 import 'package:breezodriver/features/auth/views/business_selection_screen.dart';
+import 'package:breezodriver/features/profile/viewmodels/driver_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../widgets/common_textfield.dart';
 import '../widgets/common_button.dart';
@@ -10,11 +12,15 @@ class LocationDetailsModal extends StatefulWidget {
   final String address;
   final String placeName;
   final bool isFromAllAddress;
+  final double lat;
+  final double lng;
 
   const LocationDetailsModal({
     Key? key,
     required this.address,
     required this.placeName,
+    required this.lat,
+    required this.lng,
     this.isFromAllAddress = false,
   }) : super(key: key);
 
@@ -26,7 +32,9 @@ class _LocationDetailsModalState extends State<LocationDetailsModal> {
   final _buildingController = TextEditingController();
   final _areaController = TextEditingController();
   final _customLocationController = TextEditingController();
+  final _pinCodeController = TextEditingController();
   String _selectedLocationType = 'home'; // Default selection
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -34,6 +42,81 @@ class _LocationDetailsModalState extends State<LocationDetailsModal> {
     _areaController.dispose();
     _customLocationController.dispose();
     super.dispose();
+  }
+
+  void _saveAddress() async {
+    // Validate inputs
+    if (_pinCodeController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a pin code')),
+      );
+      return;
+    }
+
+    if (_selectedLocationType == 'other' && _customLocationController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a name for this location')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
+
+      // Determine the address name based on selection
+      final String addressName = _selectedLocationType == 'home'
+          ? 'Home'
+          : _customLocationController.text.trim();
+
+      // Combine all address components
+      final String fullAddress = [
+        widget.placeName,
+        widget.address,
+        _buildingController.text.trim(),
+        _areaController.text.trim(),
+      ].where((part) => part.isNotEmpty).join(', ');
+
+      final result = await driverViewModel.saveAddress(
+        addressName: addressName,
+        addressText: fullAddress,
+        lat: widget.lat,
+        lng: widget.lng,
+        pinCode: _pinCodeController.text.trim(),
+      );
+
+      if (result) {
+        if (widget.isFromAllAddress == false) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const BusinessSelectionScreen(),
+            ),
+          );
+        } else {
+          Navigator.pop(context, {
+            'address': widget.address,
+            'placeName': widget.placeName,
+          });
+          Navigator.pop(context);
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(driverViewModel.errorMessage)),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -55,11 +138,11 @@ class _LocationDetailsModalState extends State<LocationDetailsModal> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.location_on, color: AppColors.primarycolor),
+                    const Icon(Icons.location_on, color: AppColors.primarycolor),
 
                     Text(
                       widget.placeName.length > 40
-                          ? widget.placeName.substring(0, 40) + '...'
+                          ? '${widget.placeName.substring(0, 40)}...'
                           : widget.placeName,
                       style: const TextStyle(
                         fontSize: 16,
@@ -91,6 +174,12 @@ class _LocationDetailsModalState extends State<LocationDetailsModal> {
               label: 'Area/ Locality',
               hintText: 'Eg. Nehru Nagar',
               controller: _areaController,
+            ),
+            const SizedBox(height: 16),
+            CommonTextField(
+              label: 'Pin Code',
+              hintText: 'Eg. 123456',
+              controller: _pinCodeController,
             ),
             const SizedBox(height: 24),
             const Text(
@@ -136,23 +225,7 @@ class _LocationDetailsModalState extends State<LocationDetailsModal> {
               child: CommonButton(
                 label: widget.isFromAllAddress ? 'Add Address' : 'Confirm Location',
                 isActive: true,
-                onPressed: () {
-                  // Handle confirmation and close modal
-                    if (widget.isFromAllAddress==false) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const BusinessSelectionScreen(),
-                      ),
-                    );
-                  } else {
-                    Navigator.pop(context, {
-                      'address': widget.address,
-                      'placeName': widget.placeName,
-                    });
-                    Navigator.pop(context);
-                  }
-                },
+                onPressed: _saveAddress,
               ),
             ),
             const SizedBox(height: 16),

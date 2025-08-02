@@ -30,25 +30,29 @@ class DriverInfo {
 class DriverProfile {
   final int id;
   final String name;
+  final DateTime dateOfBirth;
   final String? email;
-  final String? gender;
+  final String gender;
   final int experienceYears;
   final String licenseNumber;
   final String aadharNumber;
-  final DateTime contractStartDate;
-  final int contractDurationMonths;
+  final String? alternatePhoneNum;
+  late final DateTime? contractStartDate;
+  late final DateTime? contractEndDate;
   final String? profilePic;
   
   DriverProfile({
     this.id = 0,
     required this.name,
+    required this.dateOfBirth,
     this.email,
-    this.gender,
+    this.gender='m',
     this.experienceYears = 0,
     this.licenseNumber = '',
     this.aadharNumber = '',
+    this.alternatePhoneNum,
     required this.contractStartDate ,
-    this.contractDurationMonths = 0,
+    required this.contractEndDate ,
     this.profilePic,
   });
   
@@ -56,13 +60,15 @@ class DriverProfile {
     return DriverProfile(
       id: json['driverIid'] ?? 0,
       name: json['name'] ?? '',
+      dateOfBirth: DateTime.parse(json['dateOfBirth'] ?? DateTime.now().toIso8601String()),
       email: json['email'],
       gender: json['gender'],
       experienceYears: json['experience'] ?? 0,
       licenseNumber: json['licenseNum'] ?? '',
       aadharNumber: json['aadharNum'] ?? '',
+      alternatePhoneNum: json['alternatePhoneNum'],
       contractStartDate: DateTime.parse(json['contractStartDate'] ?? DateTime.now().toIso8601String()),
-      contractDurationMonths: json['contractTenure'] ?? 0,
+      contractEndDate: DateTime.parse(json['contractEndDate'] ?? DateTime.now().toIso8601String()),
       profilePic: json['profilePic'],
     );
   }
@@ -71,13 +77,15 @@ class DriverProfile {
     return {
       'customerIid': id,
       'name': name,
+      'dateOfBirth': dateOfBirth.toIso8601String(),
       'email': email,
       'gender': gender,
       'experience': experienceYears,
       'licenseNum': licenseNumber,
       'aadharNum': aadharNumber,
-      'contractStartDate': contractStartDate.toIso8601String(),
-      'contractTenure': contractDurationMonths,
+      'alternatePhoneNum': alternatePhoneNum,
+      'contractStartDate': contractStartDate?.toIso8601String(),
+      'contractEndDate': contractEndDate?.toIso8601String(),
       'profilePic': profilePic,
     };
   }

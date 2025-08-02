@@ -1,6 +1,7 @@
 import 'package:breezodriver/core/utils%20copy/size_config.dart';
 import 'package:breezodriver/core/utils/app_colors.dart';
 import 'package:breezodriver/features/auth/views/success_register_screen.dart';
+import 'package:breezodriver/features/profile/viewmodels/driver_viewmodel.dart';
 import 'package:breezodriver/widgets/common_button.dart';
 import 'package:breezodriver/widgets/progress_bar.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +18,76 @@ class BusinessSelectionScreen extends StatefulWidget {
 class _BusinessSelectionScreenState extends State<BusinessSelectionScreen> {
   final List<String> weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
+  String transporterOfficeName = 'Taxi GEO Transport Pvt. Ltd.';
+  String transporterOfficeAddress = '15, Ashok Marg, Hazratganj, Lucknow';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTransporterDetails();
+  }
+  Future<void> _loadTransporterDetails() async {
+    final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final success = await driverViewModel.loadTransporterOfficeDetails();
+
+      if (success && driverViewModel.transporterOfficeModel != null) {
+        setState(() {
+          transporterOfficeName = driverViewModel.transporterOfficeModel!.officeName;
+          transporterOfficeAddress = driverViewModel.transporterOfficeModel!.officeAddress;
+        });
+      }
+    } catch (e) {
+      // Handle error
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to load company details')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> onSubmit() async{
+    // Handle form submission logic here
+    final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
+
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final success = await driverViewModel.saveContractDetails(
+        contractStartDate: context.read<BusinessViewModel>().contractStart!,
+        contractEndDate: context.read<BusinessViewModel>().contractEnd!
+      );
+
+      if (success) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SuccessRegisterScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      // Handle error
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to load company details')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,9 +96,9 @@ class _BusinessSelectionScreenState extends State<BusinessSelectionScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
-              child: const ProgressBar(currentStep: 3),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 16),
+              child: ProgressBar(currentStep: 3),
             ),
             Expanded(
               child: Container(
@@ -39,7 +110,8 @@ class _BusinessSelectionScreenState extends State<BusinessSelectionScreen> {
                   ),
                 ),
                 padding: const EdgeInsets.all(16),
-                child: SingleChildScrollView(
+                child: _isLoading ? const Center(child: CircularProgressIndicator()):
+                SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -75,16 +147,14 @@ class _BusinessSelectionScreenState extends State<BusinessSelectionScreen> {
 
                         leading: Container(
                           decoration: BoxDecoration(
-
-
                             border: Border.all(color: Colors.grey),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(15),
                             child: Image.asset('assets/images/business.png', width: 60, fit: BoxFit.cover))),
-                        title: const Text('Taxi GEO Transport Pvt. Ltd.'),
-                        subtitle: const Text('15, Ashok Marg, Hazratganj, Lucknow, Uttar Pradesh 226001'),
+                        title: Text(transporterOfficeName),
+                        subtitle: Text(transporterOfficeAddress),
                         contentPadding: EdgeInsets.zero,
                       ),
                       const SizedBox(height: 24),
@@ -114,7 +184,7 @@ class _BusinessSelectionScreenState extends State<BusinessSelectionScreen> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-context.read<BusinessViewModel>().getWorkingHours(),
+                              context.read<BusinessViewModel>().getWorkingHours(),
                               style: const TextStyle(color: AppColors.activeButton, fontSize: 12),
                             ),
                           ),
@@ -138,7 +208,7 @@ context.read<BusinessViewModel>().getWorkingHours(),
                             ),
                             child: Text(
                               context.read<BusinessViewModel>().getContractDuration(),
-                              style: TextStyle(fontSize: 12, color: AppColors.activeButton),
+                              style: const TextStyle(fontSize: 12, color: AppColors.activeButton),
                             ),
                           ),
                         ],
@@ -152,26 +222,17 @@ context.read<BusinessViewModel>().getWorkingHours(),
                         ],
                       ),
                       const SizedBox(height: 24),
-                        Padding(
-                                padding: const EdgeInsets.only(top: 16),
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: CommonButton(
-                                    label: 'Continue',
-                                    isActive: true,
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder:
-                                              (context) =>
-                                                  const SuccessRegisterScreen(),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: CommonButton(
+                            label: 'Continue',
+                            isActive: true,
+                            onPressed: onSubmit,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),

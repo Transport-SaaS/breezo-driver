@@ -1,5 +1,6 @@
 import 'package:breezodriver/core/network/api_client.dart';
 import 'package:breezodriver/features/auth/data/auth_repository.dart';
+import 'package:breezodriver/features/profile/repositories/driver_repository.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../storage/secure_storage.dart';
@@ -8,6 +9,7 @@ import 'shared_prefs_service.dart';
 final GetIt serviceLocator = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
+  serviceLocator.registerLazySingleton<SecureStorage>(() => SecureStorage());
   // Register SharedPreferences instance
   final sharedPreferences = await SharedPreferences.getInstance();
   serviceLocator.registerSingleton<SharedPreferences>(sharedPreferences);
@@ -23,6 +25,13 @@ Future<void> setupServiceLocator() async {
   //repositories
   serviceLocator.registerLazySingleton<AuthRepository>(
         () => AuthRepository(
+      apiClient: serviceLocator<ApiClient>(),
+      secureStorage: serviceLocator<SecureStorage>(),
+    ),
+  );
+
+  serviceLocator.registerLazySingleton<DriverRepository>(
+        () => DriverRepository(
       apiClient: serviceLocator<ApiClient>(),
       secureStorage: serviceLocator<SecureStorage>(),
     ),

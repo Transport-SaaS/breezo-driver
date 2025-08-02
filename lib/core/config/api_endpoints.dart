@@ -26,7 +26,7 @@ class ApiEndpoints {
   static const String getAddresses = '/driver/getAddresses';
   static const String deleteAddress = '/driver/deleteAddress';
   static const String setDefaultAddress = '/driver/setDefaultAddress';
-  static const String getDriverCompanyDetails = '/driver/getDriverCompanyDetails';
+  static const String getDriverOfficeDetails = '/driver/getOfficeDetails';
   static const String getDefaultWorkingSchedule = '/driver/getDefaultWorkingSchedule';
   static const String saveDefaultWorkingSchedule = '/driver/saveDefaultWorkingSchedule';
   static const String saveWorkingDaysException = '/driver/saveWorkingDaysException';

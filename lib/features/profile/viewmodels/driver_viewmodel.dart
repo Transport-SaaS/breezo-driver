@@ -1,5 +1,6 @@
 import 'package:breezodriver/core/services/service_locator.dart';
 import 'package:breezodriver/features/profile/models/driver_model.dart';
+import 'package:breezodriver/features/profile/models/transporter_office_model.dart';
 import 'package:breezodriver/features/profile/repositories/driver_repository.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -19,7 +20,7 @@ class DriverViewModel extends ChangeNotifier {
   DriverDataStatus _status = DriverDataStatus.initial;
   DriverInfo? _driverInfo;
   DriverProfile? _driverProfile;
-  // CompanyDetails? _companyDetails;
+  TransporterOfficeModel? _transporterOfficeModel;
   WorkingSchedule? _workingSchedule;
   // List<Address> _addresses = [];
   String _errorMessage = '';
@@ -28,7 +29,7 @@ class DriverViewModel extends ChangeNotifier {
   DriverDataStatus get status => _status;
   DriverInfo? get driverInfo => _driverInfo;
   DriverProfile? get driverProfile => _driverProfile;
-  // CompanyDetails? get companyDetails => _companyDetails;
+  TransporterOfficeModel? get transporterOfficeModel => _transporterOfficeModel;
   // WorkingSchedule? get workingSchedule => _workingSchedule;
   // List<Address> get addresses => _addresses;
   String get errorMessage => _errorMessage;
@@ -96,31 +97,31 @@ class DriverViewModel extends ChangeNotifier {
   }
 
   // Load company details
-  // Future<bool> loadCompanyDetails() async {
-  //   try {
-  //     _status = DriverDataStatus.loading;
-  //     notifyListeners();
-  //
-  //     final companyDetails = await _driverRepository.getDriverCompanyDetails();
-  //
-  //     if (companyDetails != null) {
-  //       _companyDetails = companyDetails;
-  //       _status = DriverDataStatus.loaded;
-  //       _errorMessage = '';
-  //     } else {
-  //       _status = DriverDataStatus.error;
-  //       _errorMessage = 'Failed to load company details';
-  //     }
-  //
-  //     notifyListeners();
-  //     return companyDetails != null;
-  //   } catch (e) {
-  //     _status = DriverDataStatus.error;
-  //     _errorMessage = e.toString();
-  //     notifyListeners();
-  //     return false;
-  //   }
-  // }
+  Future<bool> loadTransporterOfficeDetails() async {
+    try {
+      _status = DriverDataStatus.loading;
+      notifyListeners();
+
+      final transporterOffice = await _driverRepository.getDriverTransporterOffice();
+
+      if (transporterOffice != null) {
+        _transporterOfficeModel = transporterOffice;
+        _status = DriverDataStatus.loaded;
+        _errorMessage = '';
+      } else {
+        _status = DriverDataStatus.error;
+        _errorMessage = 'Failed to load company details';
+      }
+
+      notifyListeners();
+      return transporterOffice != null;
+    } catch (e) {
+      _status = DriverDataStatus.error;
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
 
   // Load working schedule
   Future<bool> loadWorkingSchedule() async {
@@ -152,13 +153,15 @@ class DriverViewModel extends ChangeNotifier {
   // Save driver profile
   Future<bool> saveProfile({
     required String name,
+    required DateTime dateOfBirth,
     required String email,
     required String gender,
     required int experienceYears,
     required String licenseNumber,
     required String aadharNumber,
-    required final DateTime contractStartDate,
-    final int? contractDurationMonths,
+    required String? alternatePhoneNum,
+    DateTime? contractStartDate,
+    DateTime? contractEndDate,
     final String? profilePic,
   }) async {
     try {
@@ -167,13 +170,15 @@ class DriverViewModel extends ChangeNotifier {
 
       final result = await _driverRepository.saveProfile(
         name: name,
+        dateOfBirth: dateOfBirth,
         email: email,
         gender: gender,
         experienceYears: experienceYears,
         licenseNumber: licenseNumber,
         aadharNumber: aadharNumber,
+        alternatePhoneNum: alternatePhoneNum,
         contractStartDate: contractStartDate,
-        contractDurationMonths: contractDurationMonths,
+        contractEndDate: contractEndDate,
         profilePic: profilePic,
       );
 
@@ -181,13 +186,15 @@ class DriverViewModel extends ChangeNotifier {
         // Update the local profile data
         _driverProfile = DriverProfile(
           name: name,
+          dateOfBirth: dateOfBirth,
           email: email,
           gender: gender,
           experienceYears: experienceYears,
           licenseNumber: licenseNumber,
           aadharNumber: aadharNumber,
+          alternatePhoneNum: alternatePhoneNum,
           contractStartDate: contractStartDate,
-          contractDurationMonths: contractDurationMonths ?? 0,
+          contractEndDate: contractEndDate,
           profilePic: profilePic,
         );
 
@@ -195,6 +202,50 @@ class DriverViewModel extends ChangeNotifier {
         _status = DriverDataStatus.loaded;
       } else {
         _errorMessage = 'Failed to save profile';
+        _status = DriverDataStatus.error;
+      }
+
+      notifyListeners();
+      return result;
+    } catch (e) {
+      _status = DriverDataStatus.error;
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> saveContractDetails({
+    DateTime? contractStartDate,
+    DateTime? contractEndDate,
+  }) async {
+    try {
+      _status = DriverDataStatus.loading;
+      notifyListeners();
+
+      final result = await _driverRepository.saveProfile(
+        name: driverProfile!.name,
+        dateOfBirth: driverProfile!.dateOfBirth,
+        email: driverProfile!.email,
+        gender: driverProfile!.gender,
+        experienceYears: driverProfile!.experienceYears,
+        licenseNumber: driverProfile!.licenseNumber,
+        aadharNumber: driverProfile!.aadharNumber,
+        alternatePhoneNum: driverProfile!.alternatePhoneNum,
+        contractStartDate: contractStartDate,
+        contractEndDate: contractEndDate,
+        profilePic: driverProfile!.profilePic,
+      );
+
+      if (result) {
+        // Update the local profile data
+        _driverProfile?.contractStartDate = contractStartDate;
+        _driverProfile?.contractEndDate = contractEndDate;
+
+        _errorMessage = '';
+        _status = DriverDataStatus.loaded;
+      } else {
+        _errorMessage = 'Failed to save contract details';
         _status = DriverDataStatus.error;
       }
 
@@ -232,4 +283,46 @@ class DriverViewModel extends ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> saveAddress({
+    required String addressName,
+    required String addressText,
+    required double lat,
+    required double lng,
+    String? landmark,
+    required String pinCode,
+    bool active = false,
+  }) async {
+    try {
+      _status = DriverDataStatus.loading;
+      notifyListeners();
+
+      final result = await _driverRepository.saveAddress(
+        addressName: addressName,
+        addressText: addressText,
+        lat: lat,
+        lng: lng,
+        landmark: landmark,
+        pinCode: pinCode,
+        active: active,
+      );
+
+      if (result) {
+        _errorMessage = '';
+        _status = DriverDataStatus.loaded;
+      } else {
+        _errorMessage = 'Failed to save address';
+        _status = DriverDataStatus.error;
+      }
+
+      notifyListeners();
+      return result;
+    } catch (e) {
+      _status = DriverDataStatus.error;
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
 }

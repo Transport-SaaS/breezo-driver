@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../core/services/shared_prefs_service.dart';
 
 class HomeViewModel extends ChangeNotifier {
-  final SharedPrefsService _prefsService;
-  
+
   bool _isLoading = false;
   int _selectedIndex = 0;
-
-  HomeViewModel(this._prefsService);
 
   bool get isLoading => _isLoading;
   int get selectedIndex => _selectedIndex;

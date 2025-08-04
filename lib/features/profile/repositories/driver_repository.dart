@@ -84,8 +84,8 @@ class DriverRepository {
     required String licenseNumber,
     required String aadharNumber,
     String? alternatePhoneNum,
-    final DateTime? contractStartDate,
-    final DateTime? contractEndDate,
+    final String? contractStartDate,
+    final String? contractEndDate,
     final String? profilePic,
   }) async {
     try {
@@ -105,7 +105,7 @@ class DriverRepository {
         "licenseNum": licenseNumber,
         "aadharNum": aadharNumber,
         "alternatePhoneNum": alternatePhoneNum,
-        "contractStartDate": contractStartDate?.toIso8601String(),
+        "contractStartDate": contractStartDate,
         "contractEndDate": contractEndDate,
       };
 

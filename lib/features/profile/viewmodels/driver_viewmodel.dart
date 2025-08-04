@@ -30,7 +30,7 @@ class DriverViewModel extends ChangeNotifier {
   DriverInfo? get driverInfo => _driverInfo;
   DriverProfile? get driverProfile => _driverProfile;
   TransporterOfficeModel? get transporterOfficeModel => _transporterOfficeModel;
-  // WorkingSchedule? get workingSchedule => _workingSchedule;
+  WorkingSchedule? get workingSchedule => _workingSchedule;
   // List<Address> get addresses => _addresses;
   String get errorMessage => _errorMessage;
   bool get isLoading => _status == DriverDataStatus.loading;
@@ -168,6 +168,8 @@ class DriverViewModel extends ChangeNotifier {
       _status = DriverDataStatus.loading;
       notifyListeners();
 
+      final contractStartDateString = "${contractStartDate?.year}-${contractStartDate?.month.toString().padLeft(2, '0')}-${contractStartDate?.day.toString().padLeft(2, '0')}";
+      final contractEndDateString = "${contractEndDate?.year}-${contractEndDate?.month.toString().padLeft(2, '0')}-${contractEndDate?.day.toString().padLeft(2, '0')}";
       final result = await _driverRepository.saveProfile(
         name: name,
         dateOfBirth: dateOfBirth,
@@ -177,8 +179,8 @@ class DriverViewModel extends ChangeNotifier {
         licenseNumber: licenseNumber,
         aadharNumber: aadharNumber,
         alternatePhoneNum: alternatePhoneNum,
-        contractStartDate: contractStartDate,
-        contractEndDate: contractEndDate,
+        contractStartDate: contractStartDateString,
+        contractEndDate: contractEndDateString,
         profilePic: profilePic,
       );
 
@@ -223,6 +225,8 @@ class DriverViewModel extends ChangeNotifier {
       _status = DriverDataStatus.loading;
       notifyListeners();
 
+      final contractStartDateString = "${contractStartDate?.year}-${contractStartDate?.month.toString().padLeft(2, '0')}-${contractStartDate?.day.toString().padLeft(2, '0')}";
+      final contractEndDateString = "${contractEndDate?.year}-${contractEndDate?.month.toString().padLeft(2, '0')}-${contractEndDate?.day.toString().padLeft(2, '0')}";
       final result = await _driverRepository.saveProfile(
         name: driverProfile!.name,
         dateOfBirth: driverProfile!.dateOfBirth,
@@ -232,8 +236,8 @@ class DriverViewModel extends ChangeNotifier {
         licenseNumber: driverProfile!.licenseNumber,
         aadharNumber: driverProfile!.aadharNumber,
         alternatePhoneNum: driverProfile!.alternatePhoneNum,
-        contractStartDate: contractStartDate,
-        contractEndDate: contractEndDate,
+        contractStartDate: contractStartDateString,
+        contractEndDate: contractEndDateString,
         profilePic: driverProfile!.profilePic,
       );
 
@@ -252,6 +256,7 @@ class DriverViewModel extends ChangeNotifier {
       notifyListeners();
       return result;
     } catch (e) {
+      print("Error saving contract details: $e");
       _status = DriverDataStatus.error;
       _errorMessage = e.toString();
       notifyListeners();
@@ -325,4 +330,57 @@ class DriverViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> saveWorkingSchedule(List<bool> selectedDays, String inTime, String outTime) async {
+    try {
+      notifyListeners();
+
+      // Convert 12-hour format times to 24-hour format for API
+      String loginTime = _convertTo24HourFormat(inTime);
+      String logoutTime = _convertTo24HourFormat(outTime);
+
+      final result = await _driverRepository.saveDefaultWorkingSchedule(
+        sun: selectedDays[6], // Sunday is the last in our UI array
+        mon: selectedDays[0],
+        tue: selectedDays[1],
+        wed: selectedDays[2],
+        thu: selectedDays[3],
+        fri: selectedDays[4],
+        sat: selectedDays[5],
+        loginTime: loginTime,
+        logoutTime: logoutTime,
+      );
+
+      if (result) {
+        // Update local working schedule data
+        await loadWorkingSchedule();
+        _errorMessage = '';
+      } else {
+        _errorMessage = 'Failed to save working schedule';
+      }
+
+      notifyListeners();
+      return result;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  String _convertTo24HourFormat(String time12h) {
+    final parts = time12h.split(' ');
+    if (parts.length != 2) return '00:00:00'; // Default if format is incorrect
+
+    final timeParts = parts[0].split(':');
+    if (timeParts.length != 2) return '00:00:00'; // Default if format is incorrect
+
+    int hour = int.tryParse(timeParts[0]) ?? 0;
+    final minute = int.tryParse(timeParts[1]) ?? 0;
+    final isPM = parts[1].toLowerCase() == 'pm';
+
+    if (isPM && hour < 12) hour += 12;
+    if (!isPM && hour == 12) hour = 0;
+
+    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}:00';
+  }
 }

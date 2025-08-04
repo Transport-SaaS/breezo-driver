@@ -37,8 +37,8 @@ class DriverProfile {
   final String licenseNumber;
   final String aadharNumber;
   final String? alternatePhoneNum;
-  late final DateTime? contractStartDate;
-  late final DateTime? contractEndDate;
+  late DateTime? contractStartDate;
+  late DateTime? contractEndDate;
   final String? profilePic;
   
   DriverProfile({

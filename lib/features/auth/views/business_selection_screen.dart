@@ -5,6 +5,7 @@ import 'package:breezodriver/features/profile/viewmodels/driver_viewmodel.dart';
 import 'package:breezodriver/widgets/common_button.dart';
 import 'package:breezodriver/widgets/progress_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/business_viewmodel.dart';
 
@@ -26,6 +27,7 @@ class _BusinessSelectionScreenState extends State<BusinessSelectionScreen> {
   void initState() {
     super.initState();
     _loadTransporterDetails();
+    _loadDefaultWorkingSchedule();
   }
   Future<void> _loadTransporterDetails() async {
     final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
@@ -55,6 +57,54 @@ class _BusinessSelectionScreenState extends State<BusinessSelectionScreen> {
     }
   }
 
+  Future<void> _loadDefaultWorkingSchedule() async {
+    final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final success = await driverViewModel.loadWorkingSchedule();
+
+      final businessViewModel = Provider.of<BusinessViewModel>(context, listen: false);
+      if (success && driverViewModel.workingSchedule != null) {
+        setState(() {
+          businessViewModel.setWorkingDays(driverViewModel.workingSchedule!.getSelectedDays());
+          int hour = driverViewModel.workingSchedule!.getLoginTimeOfDay().hour;
+          if (hour > 12) {
+            hour -= 12; // Convert to 12-hour format
+          } else if (hour == 0) {
+            hour = 12; // Handle midnight case
+          }
+          businessViewModel.setShiftStart(hour:hour,
+            minute: driverViewModel.workingSchedule!.getLoginTimeOfDay().minute,
+            isAm: driverViewModel.workingSchedule!.getLoginTimeOfDay().period == DayPeriod.am
+          );
+          hour = driverViewModel.workingSchedule!.getLogoutTimeOfDay().hour;
+          if (hour > 12) {
+            hour -= 12; // Convert to 12-hour format
+          } else if (hour == 0) {
+            hour = 12; // Handle midnight case
+          }
+          businessViewModel.setShiftEnd(hour:hour,
+              minute: driverViewModel.workingSchedule!.getLogoutTimeOfDay().minute,
+              isAm: driverViewModel.workingSchedule!.getLogoutTimeOfDay().period == DayPeriod.am
+          );
+        });
+      }
+    } catch (e) {
+      // Handle error
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to load company details')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   Future<void> onSubmit() async{
     // Handle form submission logic here
     final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
@@ -67,8 +117,18 @@ class _BusinessSelectionScreenState extends State<BusinessSelectionScreen> {
         contractStartDate: context.read<BusinessViewModel>().contractStart!,
         contractEndDate: context.read<BusinessViewModel>().contractEnd!
       );
+      print("Contract saved successfully: $success");
 
-      if (success) {
+      final businessViewModel = Provider.of<BusinessViewModel>(context, listen: false);
+      final successDays = await driverViewModel.saveWorkingSchedule(
+        businessViewModel.workingDays,
+        _formatTimeOfDay(businessViewModel.shiftStart),
+        _formatTimeOfDay(businessViewModel.shiftEnd)
+      );
+      print("Working schedule saved successfully: $successDays");
+
+      if (success && successDays) {
+        print("Contract and working schedule saved successfully");
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -86,6 +146,12 @@ class _BusinessSelectionScreenState extends State<BusinessSelectionScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  String _formatTimeOfDay(TimeOfDay time) {
+    final now = DateTime.now();
+    final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+    return DateFormat('hh:mm a').format(dt).toLowerCase();
   }
 
   @override

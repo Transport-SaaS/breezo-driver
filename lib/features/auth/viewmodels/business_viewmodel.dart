@@ -106,6 +106,15 @@ class BusinessViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setWorkingDays(List<bool> days) {
+    if (days.length == 7) {
+      _workingDays = days;
+      notifyListeners();
+    } else {
+      throw ArgumentError('Working days list must have exactly 7 elements.');
+    }
+  }
+
   void toggleWorkingDay(int index) {
     _workingDays[index] = !_workingDays[index];
     notifyListeners();

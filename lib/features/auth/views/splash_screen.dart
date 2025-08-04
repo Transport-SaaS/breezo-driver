@@ -1,12 +1,17 @@
 // lib/views/screens/splash_screen.dart
 
+import 'package:breezodriver/core/storage/secure_storage.dart';
 import 'package:breezodriver/core/utils/app_assets.dart';
 import 'package:breezodriver/features/auth/views/phone_number_screen.dart';
 import 'package:breezodriver/features/auth/views/select_home_location.dart';
 import 'package:breezodriver/features/home/views/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
 import 'dart:io';
+
+import '../../../core/services/service_locator.dart';
+import '../viewmodels/auth_viewmodel.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -35,27 +40,40 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // Navigate after delay, regardless of permission status
     // You can handle permission denial in the location screen
-    Future.delayed(const Duration(seconds: 3), () {
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => 
-              const PhoneNumberScreen(),
-              // const HomeScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            const begin = 0.0;
-            const end = 1.0;
-            const curve = Curves.easeIn;
+    Future.delayed(const Duration(seconds: 3), () async {
+      final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
+      final isAuthenticated = await authViewModel.checkAuthentication();
+      if(isAuthenticated) {
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
+      }
+      else {
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+            const PhoneNumberScreen(),
+            // const HomeScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation,
+                child) {
+              const begin = 0.0;
+              const end = 1.0;
+              const curve = Curves.easeIn;
 
-            var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-            var fadeAnimation = animation.drive(tween);
+              var tween = Tween(begin: begin, end: end).chain(
+                  CurveTween(curve: curve));
+              var fadeAnimation = animation.drive(tween);
 
-            return FadeTransition(
-              opacity: fadeAnimation,
-              child: child,
-            );
-          },
-        ),
-      );
+              return FadeTransition(
+                opacity: fadeAnimation,
+                child: child,
+              );
+            },
+          ),
+        );
+      }
     });
   }
   Future<void> _attemptLocalNetworkAccess() async {

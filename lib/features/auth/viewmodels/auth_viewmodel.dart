@@ -166,4 +166,25 @@ class AuthViewModel extends ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> checkAuthentication() async {
+    try {
+      final isAuth = await _authRepository.isAuthenticated();
+
+      if (isAuth) {
+        _status = AuthStatus.authenticated;
+      } else {
+        _status = AuthStatus.initial;
+      }
+
+      notifyListeners();
+      return isAuth;
+    } catch (e) {
+      _status = AuthStatus.error;
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
 }

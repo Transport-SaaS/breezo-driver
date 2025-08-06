@@ -5,6 +5,9 @@ import 'package:breezodriver/features/profile/views/profile_screen.dart';
 import 'package:breezodriver/widgets/todays_trip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:provider/provider.dart';
+
+import '../../profile/viewmodels/driver_viewmodel.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -12,7 +15,22 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String address = 'Building No. 134, Mahalaxmi Nagar, Nagasandra, Bangalore';
+    String addressName = 'Home';
+    String driverName = 'Unknown';
+    String driverRating = '0.0';
+    String vehicleModel = 'Unknown';
+    String vehicleColor = 'Unknown';
+    String vehicleNumber = 'Unknown';
 
+    final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
+    if (driverViewModel.defaultAddress != null) {
+      address = driverViewModel.defaultAddress!.addressText;
+      addressName = driverViewModel.defaultAddress!.addressName;
+      driverName = driverViewModel.driverProfile?.name ?? 'Unknown';
+      vehicleNumber = driverViewModel.vehicle?.registrationNo ?? 'Unknown';
+      vehicleColor = driverViewModel.vehicle?.colour ?? 'Unknown';
+      vehicleModel = driverViewModel.vehicle?.brandName ?? 'Unknown';
+    }
     return Scaffold(
       appBar: AppBar(
         leading: Padding(
@@ -50,7 +68,7 @@ class HomeScreen extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  'Home',
+                  addressName,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize:
@@ -156,12 +174,12 @@ class HomeScreen extends StatelessWidget {
                                                 ),
 
                                                 Container(
-                                                  padding: EdgeInsets.symmetric(
+                                                  padding: const EdgeInsets.symmetric(
                                                     horizontal: 4,
                                                     vertical: 2,
                                                   ),
                                                   decoration: BoxDecoration(
-                                                    color: Color(0xffFFEAAC),
+                                                    color: const Color(0xffFFEAAC),
                                                     border: Border.all(
                                                       color: Colors.amber,
                                                     ),
@@ -170,17 +188,17 @@ class HomeScreen extends StatelessWidget {
                                                             15
                                                         )
                                                   ),
-                                                  child: const Row(
+                                                  child: Row(
                                                     children: [
-                                                      Icon(
+                                                      const Icon(
                                                         Icons.star,
                                                         color: Colors.amber,
                                                         size: 16,
                                                       ),
-                                                      SizedBox(width: 2),
+                                                      const SizedBox(width: 2),
                                                       Text(
-                                                        '4.2',
-                                                        style: TextStyle(
+                                                        driverRating,
+                                                        style: const TextStyle(
                                                           fontSize: 10,
                                                           fontWeight:
                                                               FontWeight.bold,
@@ -192,7 +210,7 @@ class HomeScreen extends StatelessWidget {
                                               ],
                                             ),
 
-                                            SizedBox(width: 10), // ~4px
+                                            const SizedBox(width: 10), // ~4px
 
                                             // Driver info and schedule
                                             Expanded(
@@ -203,9 +221,9 @@ class HomeScreen extends StatelessWidget {
                                                   // Driver name and online status
                                                   Row(
                                                     children: [
-                                                      const Text(
-                                                        'Rajesh Munna',
-                                                        style: TextStyle(
+                                                      Text(
+                                                        driverName,
+                                                        style: const TextStyle(
                                                           fontSize: 16,
                                                           fontWeight:
                                                               FontWeight.bold,
@@ -239,9 +257,9 @@ class HomeScreen extends StatelessWidget {
                                                   const SizedBox(height: 4),
 
                                                   // Car model
-                                                  const Text(
-                                                    'White Tata Indigo',
-                                                    style: TextStyle(
+                                                  Text(
+                                                    '$vehicleColor $vehicleModel',
+                                                    style: const TextStyle(
                                                       fontSize: 14,
                                                       color: Colors.grey,
                                                     ),
@@ -254,61 +272,61 @@ class HomeScreen extends StatelessWidget {
                                           ],
                                         ),
                                          // Schedule
-                                                  const SizedBox(height: 8),
-                                                  Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                    children: [
-                                                      const Text(
-                                                        'Mon-Fri',
-                                                        style: TextStyle(
-                                                          fontSize: 14,
-                                                        ),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Text(
+                                                'Mon-Fri',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              const Text(
+                                                '07:30 pm - 02:30 am',
+                                                style: TextStyle(
+                                                  color: AppColors.primarycolor,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  // Edit schedule functionality
+                                                },
+                                                style: TextButton.styleFrom(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        left: 8,
                                                       ),
-                                                      const SizedBox(width: 8),
-                                                      const Text(
-                                                        '07:30 pm - 02:30 am',
-                                                        style: TextStyle(
-                                                          color: AppColors.primarycolor,
-                                                          fontSize: 14,
-                                                        ),
+                                                  minimumSize:
+                                                      Size.zero,
+                                                  tapTargetSize:
+                                                      MaterialTapTargetSize
+                                                          .shrinkWrap,
+                                                ),
+                                                child: const Row(
+                                                  children: [
+                                                    Text(
+                                                      'Edit Schedule',
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        color: AppColors.activeButton
                                                       ),
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          // Edit schedule functionality
-                                                        },
-                                                        style: TextButton.styleFrom(
-                                                          padding:
-                                                              const EdgeInsets.only(
-                                                                left: 8,
-                                                              ),
-                                                          minimumSize:
-                                                              Size.zero,
-                                                          tapTargetSize:
-                                                              MaterialTapTargetSize
-                                                                  .shrinkWrap,
-                                                        ),
-                                                        child: Row(
-                                                          children: [
-                                                            Text(
-                                                              'Edit Schedule',
-                                                              style: TextStyle(
-                                                                fontSize: 14,
-                                                                color: AppColors.activeButton
-                                                              ),
-                                                            ),
-                                                            Icon(
-                                                              Icons
-                                                                  .arrow_forward,
-                                                              size: 16,
-                                                              color: Color(
-                                                                0xFF00BCD4,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
+                                                    ),
+                                                    Icon(
+                                                      Icons
+                                                          .arrow_forward,
+                                                      size: 16,
+                                                      color: Color(
+                                                        0xFF00BCD4,
                                                       ),
-                                                    ],
-                                                  ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                       ],
                                     ),
                                   ),
@@ -343,9 +361,9 @@ class HomeScreen extends StatelessWidget {
                                         color: Color(0xFFFFD54F),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: const Text(
-                                        'KA 02 AA 2134',
-                                        style: TextStyle(
+                                      child: Text(
+                                        vehicleNumber,
+                                        style: const TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
                                         ),

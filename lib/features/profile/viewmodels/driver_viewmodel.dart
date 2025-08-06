@@ -4,6 +4,8 @@ import 'package:breezodriver/features/profile/models/transporter_office_model.da
 import 'package:breezodriver/features/profile/repositories/driver_repository.dart';
 import 'package:flutter/cupertino.dart';
 
+import '../models/address_model.dart';
+import '../models/vehicle_model.dart';
 import '../models/working_schedule_model.dart';
 
 enum DriverDataStatus {
@@ -22,6 +24,8 @@ class DriverViewModel extends ChangeNotifier {
   DriverProfile? _driverProfile;
   TransporterOfficeModel? _transporterOfficeModel;
   WorkingSchedule? _workingSchedule;
+  Address? _defaultAddress;
+  Vehicle? _vehicle;
   // List<Address> _addresses = [];
   String _errorMessage = '';
 
@@ -31,6 +35,8 @@ class DriverViewModel extends ChangeNotifier {
   DriverProfile? get driverProfile => _driverProfile;
   TransporterOfficeModel? get transporterOfficeModel => _transporterOfficeModel;
   WorkingSchedule? get workingSchedule => _workingSchedule;
+  Address? get defaultAddress => _defaultAddress;
+  Vehicle? get vehicle => _vehicle;
   // List<Address> get addresses => _addresses;
   String get errorMessage => _errorMessage;
   bool get isLoading => _status == DriverDataStatus.loading;
@@ -361,6 +367,58 @@ class DriverViewModel extends ChangeNotifier {
       notifyListeners();
       return result;
     } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> loadDefaultAddress() async {
+    try {
+      _status = DriverDataStatus.loading;
+      notifyListeners();
+
+      final address = await _driverRepository.getDefaultAddress();
+
+      if (address != null) {
+        _defaultAddress = address;
+        _status = DriverDataStatus.loaded;
+        _errorMessage = '';
+      } else {
+        _status = DriverDataStatus.empty;
+        _errorMessage = 'No default address found';
+      }
+
+      notifyListeners();
+      return address != null;
+    } catch (e) {
+      _status = DriverDataStatus.error;
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+  
+  Future<bool> loadVehicleDetails() async {
+    try {
+      _status = DriverDataStatus.loading;
+      notifyListeners();
+
+      final vehicle = await _driverRepository.getVehicleDetails();
+
+      if (vehicle != null) {
+        _vehicle = vehicle;
+        _status = DriverDataStatus.loaded;
+        _errorMessage = '';
+      } else {
+        _status = DriverDataStatus.empty;
+        _errorMessage = 'No vehicle details found';
+      }
+
+      notifyListeners();
+      return vehicle != null;
+    } catch (e) {
+      _status = DriverDataStatus.error;
       _errorMessage = e.toString();
       notifyListeners();
       return false;

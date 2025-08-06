@@ -23,7 +23,9 @@ class ApiEndpoints {
   static const String saveProfile = '/driver/saveProfile';
   static const String setAccountStatus = '/driver/setAccountStatus';
   static const String saveAddress = '/driver/saveAddress';
+  static const String saveAddressAndSetDefault = '/driver/saveAddressAndSetDefault';
   static const String getAddresses = '/driver/getAddresses';
+  static const String getActiveAddress = '/driver/getActiveAddress';
   static const String deleteAddress = '/driver/deleteAddress';
   static const String setDefaultAddress = '/driver/setDefaultAddress';
   static const String getDriverOfficeDetails = '/driver/getOfficeDetails';
@@ -35,6 +37,7 @@ class ApiEndpoints {
   static const String ratePastTrip = '/driver/ratePastTrip';
   static const String getPartialTripInformation = '/driver/getPartialTripInformation';
   static const String getPartialDriverDataForTripRoute = '/driver/getPartialDriverDataForTripRoute';
+  static const String getVehicleDetails = '/driver/getVehicleDetails';
 
   // Trip endpoints
   static const String getTripDetails = '/tripData/getTripDetails';

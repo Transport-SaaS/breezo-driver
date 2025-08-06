@@ -4,7 +4,9 @@ import 'package:dio/dio.dart';
 import '../../../core/config/api_endpoints.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/storage/secure_storage.dart';
+import '../models/address_model.dart';
 import '../models/driver_model.dart';
+import '../models/vehicle_model.dart';
 import '../models/working_schedule_model.dart';
 
 class DriverRepository {
@@ -186,6 +188,39 @@ class DriverRepository {
     }
   }
 
+  /// Get driver address
+  /// Returns a list of Address objects
+  Future<Address?> getDefaultAddress() async {
+    try {
+      // Get the token to ensure we're authenticated
+      final token = await _secureStorage.getAccessToken();
+      if (token == null || token.isEmpty) {
+        print('DriverRepository: No auth token available');
+        return null;
+      }
+
+      final response = await _apiClient.get(
+        endpoint: ApiEndpoints.getActiveAddress,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      // Check for successful response
+      if (response.statusCode == 200) {
+        return Address.fromJson(response.data);
+      } else {
+        print('DriverRepository getDefaultAddress error: Status ${response.statusCode}, Body: ${response.data}');
+        return null;
+      }
+    } catch (e) {
+      print('Error during getDefaultAddress: $e');
+      return null;
+    }
+  }
+
   /// Get driver company details
   /// Returns CompanyDetails with company information
   Future<TransporterOfficeModel?> getDriverTransporterOffice() async {
@@ -364,6 +399,37 @@ class DriverRepository {
     } catch (e) {
       print('Error during saveDefaultWorkingSchedule: $e');
       return false;
+    }
+  }
+
+  Future<Vehicle?> getVehicleDetails() async {
+    try {
+      // Get the token to ensure we're authenticated
+      final token = await _secureStorage.getAccessToken();
+      if (token == null || token.isEmpty) {
+        print('DriverRepository: No auth token available');
+        return null;
+      }
+
+      final response = await _apiClient.get(
+        endpoint: ApiEndpoints.getVehicleDetails,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          }
+        )
+      );
+
+      // Check for successful response
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return Vehicle.fromJson(response.data);
+      } else {
+        print('DriverRepository getVehicleDetails error: Status ${response.statusCode}, Body: ${response.data}');
+        return null;
+      }
+    } catch (e) {
+      print('Error during getVehicleDetails: $e');
+      return null;
     }
   }
 

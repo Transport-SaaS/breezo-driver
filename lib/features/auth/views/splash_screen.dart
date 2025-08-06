@@ -1,16 +1,14 @@
 // lib/views/screens/splash_screen.dart
 
-import 'package:breezodriver/core/storage/secure_storage.dart';
 import 'package:breezodriver/core/utils/app_assets.dart';
 import 'package:breezodriver/features/auth/views/phone_number_screen.dart';
-import 'package:breezodriver/features/auth/views/select_home_location.dart';
 import 'package:breezodriver/features/home/views/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 
-import '../../../core/services/service_locator.dart';
+import '../../profile/viewmodels/driver_viewmodel.dart';
 import '../viewmodels/auth_viewmodel.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -44,6 +42,11 @@ class _SplashScreenState extends State<SplashScreen> {
       final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
       final isAuthenticated = await authViewModel.checkAuthentication();
       if(isAuthenticated) {
+        final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
+        await driverViewModel.loadTransporterOfficeDetails();
+        await driverViewModel.loadDriverData();
+        await driverViewModel.loadDefaultAddress();
+        await driverViewModel.loadVehicleDetails();
         if (mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const HomeScreen()),

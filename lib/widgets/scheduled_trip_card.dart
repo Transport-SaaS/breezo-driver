@@ -7,6 +7,8 @@ import 'package:breezodriver/widgets/info_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart' show SvgPicture;
 
+import '../core/utils/utils.dart';
+
 class ScheduledTripCard extends StatefulWidget {
   final String assignedAt;
   final String startTime;
@@ -115,10 +117,10 @@ class _ScheduledTripCardState extends State<ScheduledTripCard> {
                     ),
                   ),
                 ),
-                Text(
-                  'Assigned at: ${widget.assignedAt}',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                ),
+                // Text(
+                //   'Assigned at: ${widget.assignedAt}',
+                //   style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                // ),
               ],
             ),
             const SizedBox(height: 16),

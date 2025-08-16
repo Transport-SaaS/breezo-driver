@@ -1,6 +1,7 @@
 import 'package:breezodriver/core/network/api_client.dart';
 import 'package:breezodriver/features/auth/data/auth_repository.dart';
 import 'package:breezodriver/features/profile/repositories/driver_repository.dart';
+import 'package:breezodriver/features/trips/repositories/trip_repository.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../storage/secure_storage.dart';
@@ -37,6 +38,12 @@ Future<void> setupServiceLocator() async {
     ),
   );
 
+  serviceLocator.registerLazySingleton<TripRepository>(
+        () => TripRepository(
+      apiClient: serviceLocator<ApiClient>(),
+      secureStorage: serviceLocator<SecureStorage>(),
+    ),
+  );
 }
 
 // Note: TripDetailsViewModel should be created with a specific TripModel instance,

@@ -1,5 +1,6 @@
 import 'package:breezodriver/core/utils%20copy/size_config.dart';
 import 'package:breezodriver/core/utils/app_colors.dart';
+import 'package:breezodriver/core/utils/utils.dart';
 import 'package:breezodriver/features/trips/models/trip_model.dart';
 import 'package:breezodriver/features/trips/viewmodels/trip_details_viewmodel.dart';
 import 'package:breezodriver/features/trips/widgets/otp_verification_modal.dart';
@@ -56,8 +57,8 @@ class TripBottomSheet extends StatelessWidget {
             decoration: BoxDecoration(
               color:
                   viewModel.status == TripStatus.assigned
-                      ? Color(0xFF6A121B)
-                      : Color(0xFF126E5F),
+                      ? const Color(0xFF6A121B)
+                      : const Color(0xFF126E5F),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
@@ -126,16 +127,16 @@ class TripBottomSheet extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Pickup Route',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                Text(
+                  viewModel.trip.isToBase == true ? 'Drop Route':'Pickup Route',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
                     buildInfoChip(
                       Icons.access_time,
-                      viewModel.trip.duration,
+                      Utils.getHourAndMinuteFromSeconds(int.parse(viewModel.trip.duration)),
                       Colors.grey.shade200,
                       Colors.grey.shade800,
                     ),
@@ -149,7 +150,7 @@ class TripBottomSheet extends StatelessWidget {
                     const SizedBox(width: 8),
                     buildInfoChip(
                       Icons.people_outline,
-                      viewModel.trip.passengers.toString(),
+                      viewModel.trip.passengerList.length.toString(),
                       Colors.grey.shade200,
                       Colors.grey.shade800,
                     ),
@@ -463,8 +464,8 @@ class TripBottomSheet extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Pickup Route',
-                            style: TextStyle(
+                            viewModel.trip.isToBase == true ? 'Drop Route':'Pickup Route',
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
@@ -1193,7 +1194,7 @@ class TripBottomSheet extends StatelessWidget {
                       ),
                     ),
                     title: Text(
-                      viewModel.trip.endLocation,
+                      viewModel.trip.endAddress,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,

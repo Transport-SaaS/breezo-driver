@@ -53,7 +53,6 @@ class TripDetailsViewModel extends ChangeNotifier {
   
   // For rejection reason
   String? _rejectionReason;
-  
   TripDetailsViewModel(this._trip) {
     // Initialize timer if trip is assigned
     if (_trip.status == 'Assigned') {

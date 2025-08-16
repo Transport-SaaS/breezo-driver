@@ -1,4 +1,5 @@
 import 'package:breezodriver/core/utils/app_colors.dart';
+import 'package:breezodriver/core/utils/utils.dart';
 import 'package:breezodriver/features/trips/models/trip_model.dart';
 import 'package:breezodriver/widgets/scheduled_trip_card.dart';
 import 'package:flutter/material.dart';
@@ -131,18 +132,18 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
     return TripModel(
       id: '1',
       status: status,
-      assignedAt: '11:23am, Jan 24, 2025',
-      startTime: '09:45',
+      assignedAt: DateTime.now(),
+      startTime: DateTime.now(),
       startAddress: 'Building No. 134, Mahalaxmi Nagar, Naga...',
-      endTime: '11:00',
+      endTime: DateTime.now().add(const Duration(hours: 1, minutes: 13)),
       endAddress: 'A2, Block-C, ABC Techpark, Maga...',
       duration: '01h 13m',
       distance: '20 kms',
       passengers: 4,
       acceptBeforeTime: status == 'Assigned' ? '11:45 AM' : status,
       passengerList: [],
-      endLocation: '',
-      startLocation: 'Building No. 134, Mahalaxmi Nagar',
+      endLocation: [],
+      startLocation: [],
     );
   }
 
@@ -210,7 +211,7 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
                 ),
                 Text(
                   formattedMonth,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: AppColors.primarycolor,
@@ -266,10 +267,10 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: ScheduledTripCard(
-                    assignedAt: trip.assignedAt,
-                    startTime: trip.startTime,
+                    assignedAt: Utils.formatDate(trip.assignedAt),
+                    startTime: Utils.formatTime(trip.startTime),
                     startLocation: trip.startAddress,
-                    endTime: trip.endTime,
+                    endTime: Utils.formatTime(trip.endTime),
                     endLocation: trip.endAddress,
                     duration: trip.duration,
                     distance: trip.distance,

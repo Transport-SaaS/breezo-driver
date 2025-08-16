@@ -3,6 +3,7 @@ import 'package:breezodriver/features/auth/viewmodels/business_viewmodel.dart';
 import 'package:breezodriver/features/auth/viewmodels/location_viewmodel.dart';
 import 'package:breezodriver/features/auth/views/splash_screen.dart';
 import 'package:breezodriver/features/profile/viewmodels/driver_viewmodel.dart';
+import 'package:breezodriver/features/trips/viewmodels/trip_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/services/service_locator.dart';
@@ -30,6 +31,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LocationViewModel()),
         ChangeNotifierProvider(create: (_) => BusinessViewModel()),
         ChangeNotifierProvider(create: (_) => DriverViewModel()),
+        ChangeNotifierProvider(create: (_) => TripViewModel())
       ],
       child: MaterialApp(
         title: 'Breezo Driver',

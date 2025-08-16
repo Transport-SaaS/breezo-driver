@@ -27,14 +27,14 @@ class _TripMapViewState extends State<TripMapView> {
   final Set<Polyline> _polylines = {};
   
   // Sample coordinates (Bangalore area) - would be replaced with real data
-  static const LatLng _startLocation = LatLng(12.9716, 77.5946);
-  static const LatLng _endLocation = LatLng(13.0499, 77.5700);
+  LatLng _startLocation = LatLng(17.9716, 77.5946);
+  LatLng _endLocation = LatLng(17.0499, 77.5700);
   
   // Current taxi location - would be updated in real-time
-  LatLng _taxiLocation = LatLng(12.9716, 77.5946);
+  LatLng _taxiLocation = LatLng(17.5716, 78.5946);
   
   // Passenger locations - simulated
-  List<LatLng> _passengerLocations = [];
+  final List<LatLng> _passengerLocations = [];
   BitmapDescriptor? _taxiIcon;
   BitmapDescriptor? _passengerIcon;
   BitmapDescriptor? _destinationIcon;
@@ -44,9 +44,43 @@ class _TripMapViewState extends State<TripMapView> {
   @override
   void initState() {
     super.initState();
+    // Initialize start and end locations
+    _startLocation = LatLng(widget.trip.startLocation[1], widget.trip.startLocation[0]);
+    _endLocation = LatLng(widget.trip.endLocation[1], widget.trip.endLocation[0]);
     _setupMarkerIcons();
     _generatePassengerLocations();
     _setupPolylines();
+
+    //update taxi location every 5 seconds
+    Timer.periodic(const Duration(seconds: 5), (timer) {
+      getAndUpdateTaxiLocation();
+    });
+  }
+
+  void getAndUpdateTaxiLocation() {
+    // Simulate getting the current taxi location from a service
+    // In a real app, this would be replaced with actual location updates
+    LatLng newLocation = LatLng(
+      _taxiLocation.latitude + 0.0001, // Simulate movement
+      _taxiLocation.longitude + 0.0001,
+    );
+
+    updateTaxiLocation(newLocation);
+  }
+
+  void updateTaxiLocation(LatLng newLocation) {
+    setState(() {
+      _taxiLocation = newLocation;
+      _markers.removeWhere((m) => m.markerId.value == 'taxi');
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('taxi'),
+          position: _taxiLocation,
+          icon: _taxiIcon ?? BitmapDescriptor.defaultMarker,
+          infoWindow: const InfoWindow(title: 'Your Location'),
+        ),
+      );
+    });
   }
   
   Future<void> _setupMarkerIcons() async {
@@ -80,17 +114,12 @@ class _TripMapViewState extends State<TripMapView> {
 
   void _generatePassengerLocations() {
     // Generate intermediate points between start and end locations
-    double latStep = (_endLocation.latitude - _startLocation.latitude) / 
-                     (widget.trip.passengerList.length + 1);
-    double lngStep = (_endLocation.longitude - _startLocation.longitude) / 
-                     (widget.trip.passengerList.length + 1);
-    
     _passengerLocations.clear();
     for (int i = 1; i <= widget.trip.passengerList.length; i++) {
       _passengerLocations.add(
         LatLng(
-          _startLocation.latitude + latStep * i,
-          _startLocation.longitude + lngStep * i,
+          widget.trip.passengerList[i - 1].location[1],
+          widget.trip.passengerList[i - 1].location[0]
         ),
       );
     }

@@ -13,6 +13,9 @@ import 'dart:ui';
 import 'package:breezodriver/features/trips/views/trip_rating_screen.dart';
 import 'package:breezodriver/features/trips/viewmodels/trip_rating_viewmodel.dart';
 
+import '../../../core/utils/utils.dart';
+import '../viewmodels/trip_viewmodel.dart';
+
 class TripDetailsScreen extends StatefulWidget {
   final TripModel trip;
 
@@ -28,21 +31,36 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   bool _showMapView = false;
   late TripDetailsViewModel _viewModel;
   bool _hasNavigatedToRating = false;
+  bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    loadTripDetails();
     // Create the view model directly
     _viewModel = TripDetailsViewModel(widget.trip);
-    
+
     // Add listener to rebuild UI when viewModel changes
     _viewModel.addListener(_onViewModelChanged);
     
+  }
+
+  void loadTripDetails() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final tripViewModel = Provider.of<TripViewModel>(context, listen: false);
+    await tripViewModel.loadTripDetails(widget.trip, false);
+
     // Initialize keys for each timeline point (start + passengers + destination)
     _timelineDotKeys.clear();
     for (int i = 0; i < widget.trip.passengerList.length + 2; i++) {
       _timelineDotKeys.add(GlobalKey());
     }
+    setState(() {
+      isLoading = false;
+    });
   }
   
   void _onViewModelChanged() {
@@ -112,7 +130,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
               label: Text(_showMapView ? 'List View' : 'Map View'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primarycolor,
-                side: BorderSide(color: AppColors.primarycolor),
+                side: const BorderSide(color: AppColors.primarycolor),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -139,24 +157,27 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       body: Column(
         children: [
           if (!_showMapView)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Assigned at: ${_viewModel.trip.assignedAt}',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                  // Text(
+                  //   'Assigned at: ${Utils.formatTime(_viewModel.trip.assignedAt)}',
+                  //   style: TextStyle(
+                  //     color: Colors.grey[600],
+                  //     fontSize: 14,
+                  //   ),
+                  // ),
+                  SizedBox(height: 16),
                 ],
               ),
             ),
 
           // Main content area - conditionally show timeline or map
+          if (isLoading)
+            const Center(child: CircularProgressIndicator())
+          else
           Expanded(
             child:
                 _showMapView
@@ -254,7 +275,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
             children: [
               // Start location
               _buildTimelineItem(
-                time: viewModel.trip.startTime,
+                time: Utils.formatTime(viewModel.trip.startTime),
                 title: 'Start',
                 address: viewModel.trip.startAddress,
                 isStart: true,
@@ -280,7 +301,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
 
               // Destination
               _buildTimelineItem(
-                time: viewModel.trip.endTime,
+                time: Utils.formatTime(viewModel.trip.endTime),
                 title: 'Destination',
                 address: viewModel.trip.endAddress,
                 isStart: false,
@@ -301,7 +322,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
     bool isLast = false,
     Key? key,
   }) {
-    final Color activeColor = const Color(0xFF00BFA5); // Teal color
+    const Color activeColor = Color(0xFF00BFA5); // Teal color
     final Color inactiveColor = Colors.grey.shade300;
 
     return Container(
@@ -321,7 +342,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
     GlobalKey? startKey,
     GlobalKey? endKey,
   }) {
-    final Color activeColor = const Color(0xFF00BFA5); // Teal color
+    const Color activeColor = Color(0xFF00BFA5); // Teal color
     final Color inactiveColor = Colors.grey.shade300;
 
     // Default height if we can't measure
@@ -376,7 +397,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
     required bool isLast,
   }) {
     // Using teal color for active items as shown in the screenshot
-    final Color activeColor = AppColors.primarycolor;
+    const Color activeColor = AppColors.primarycolor;
     final Color inactiveColor = Colors.grey.shade400;
 
     return Padding(
@@ -524,7 +545,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                   height: 32,
                   width: 32,
                   margin: const EdgeInsets.only(top: 0, right: 8),
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: AppColors.primarycolorDark,
                     shape: BoxShape.circle,
                   ),

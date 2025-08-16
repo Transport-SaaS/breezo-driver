@@ -1,6 +1,8 @@
 import 'package:breezodriver/core/utils%20copy/size_config.dart';
 import 'package:breezodriver/core/utils/app_colors.dart';
+import 'package:breezodriver/core/utils/utils.dart';
 import 'package:flutter/material.dart';
+import '../features/trips/viewmodels/trip_viewmodel.dart';
 import 'scheduled_trip_card.dart';
 import 'package:provider/provider.dart';
 import 'package:breezodriver/features/trips/models/trip_model.dart';
@@ -27,16 +29,16 @@ class _TodaysTripCardState extends State<TodaysTripCard> {
     _initializeTrips();
   }
   
-  void _initializeTrips() {
-    // Get all sample trips from TripData
-    final allTrips = TripData.getSampleTrips();
+  void _initializeTrips() async {
+    final tripViewModel = Provider.of<TripViewModel>(context, listen: false);
+    final allTrips = tripViewModel.plannedTrips + tripViewModel.pastTrips;
     
     // Group trips by status and organize tabs
     _tripsByStatus = {
-      'Assigned': allTrips.where((trip) => trip.status == 'Assigned').toList(),
-      'Accepted': allTrips.where((trip) => trip.status == 'Accepted').toList(),
-      'Missed': allTrips.where((trip) => trip.status == 'Missed').toList(),
-      'Completed': allTrips.where((trip) => trip.status == 'Completed').toList(),
+      'Assigned': allTrips.where((trip) => trip.status == 'assigned').toList(),
+      'Accepted': allTrips.where((trip) => trip.status == 'accepted').toList(),
+      // 'Missed': allTrips.where((trip) => trip.status == 'Missed').toList(),
+      'Completed': allTrips.where((trip) => trip.status == 'completed').toList(),
     };
   }
 
@@ -136,12 +138,12 @@ class _TodaysTripCardState extends State<TodaysTripCard> {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16),
                       child: ScheduledTripCard(
-                        assignedAt: trip.assignedAt,
-                        startTime: trip.startTime,
+                        assignedAt: Utils.formatTime(trip.assignedAt),
+                        startTime: Utils.formatTime(trip.startTime),
                         startLocation: trip.startAddress,
-                        endTime: trip.endTime,
+                        endTime: Utils.formatTime(trip.endTime),
                         endLocation: trip.endAddress,
-                        duration: trip.duration,
+                        duration: Utils.getHourAndMinuteFromSeconds(int.parse(trip.duration)),
                         distance: trip.distance,
                         passengers: trip.passengers,
                         acceptBeforeTime: trip.acceptBeforeTime,

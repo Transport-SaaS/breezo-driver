@@ -33,6 +33,7 @@ class ApiEndpoints {
   static const String saveDefaultWorkingSchedule = '/driver/saveDefaultWorkingSchedule';
   static const String saveWorkingDaysException = '/driver/saveWorkingDaysException';
   static const String getPlannedTrips = '/driver/getDriverPlannedTripsForFuture';
+  static const String getDriverPastOneWeekTrips = '/driver/getDriverPastOneWeekTrips';
   static const String getPastTrips = '/driver/getDriverPastTrips';
   static const String ratePastTrip = '/driver/ratePastTrip';
   static const String getPartialTripInformation = '/driver/getPartialTripInformation';

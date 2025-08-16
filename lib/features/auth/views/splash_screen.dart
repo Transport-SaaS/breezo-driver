@@ -3,6 +3,7 @@
 import 'package:breezodriver/core/utils/app_assets.dart';
 import 'package:breezodriver/features/auth/views/phone_number_screen.dart';
 import 'package:breezodriver/features/home/views/home_screen.dart';
+import 'package:breezodriver/features/trips/viewmodels/trip_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
@@ -39,43 +40,49 @@ class _SplashScreenState extends State<SplashScreen> {
     // Navigate after delay, regardless of permission status
     // You can handle permission denial in the location screen
     Future.delayed(const Duration(seconds: 3), () async {
-      final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-      final isAuthenticated = await authViewModel.checkAuthentication();
-      if(isAuthenticated) {
-        final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
-        await driverViewModel.loadTransporterOfficeDetails();
-        await driverViewModel.loadDriverData();
-        await driverViewModel.loadDefaultAddress();
-        await driverViewModel.loadVehicleDetails();
-        if (mounted) {
+      if(mounted) {
+        final authViewModel = Provider.of<AuthViewModel>(
+            context, listen: false);
+        final isAuthenticated = await authViewModel.checkAuthentication();
+        if(isAuthenticated) {
+          final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
+          await driverViewModel.loadTransporterOfficeDetails();
+          await driverViewModel.loadDriverData();
+          await driverViewModel.loadDefaultAddress();
+          await driverViewModel.loadVehicleDetails();
+          final tripViewModel = Provider.of<TripViewModel>(context, listen: false);
+          await tripViewModel.loadPlannedTrips();
+          await tripViewModel.loadPastTrips();
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          }
+        }
+        else {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+              const PhoneNumberScreen(),
+              // const HomeScreen(),
+              transitionsBuilder: (context, animation, secondaryAnimation,
+                  child) {
+                const begin = 0.0;
+                const end = 1.0;
+                const curve = Curves.easeIn;
+
+                var tween = Tween(begin: begin, end: end).chain(
+                    CurveTween(curve: curve));
+                var fadeAnimation = animation.drive(tween);
+
+                return FadeTransition(
+                  opacity: fadeAnimation,
+                  child: child,
+                );
+              },
+            ),
           );
         }
-      }
-      else {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-            const PhoneNumberScreen(),
-            // const HomeScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation,
-                child) {
-              const begin = 0.0;
-              const end = 1.0;
-              const curve = Curves.easeIn;
-
-              var tween = Tween(begin: begin, end: end).chain(
-                  CurveTween(curve: curve));
-              var fadeAnimation = animation.drive(tween);
-
-              return FadeTransition(
-                opacity: fadeAnimation,
-                child: child,
-              );
-            },
-          ),
-        );
       }
     });
   }

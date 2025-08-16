@@ -336,7 +336,7 @@ class HomeScreen extends StatelessWidget {
                                     top: 0,
                                     right: 0,
                                     child: ClipRRect(
-                                      borderRadius: BorderRadius.only(
+                                      borderRadius: const BorderRadius.only(
                                         topRight: Radius.circular(16),
                                       ),
                                       child: Image.asset(
@@ -358,7 +358,7 @@ class HomeScreen extends StatelessWidget {
                                       ),
                                       decoration: BoxDecoration(
                                         border: Border.all(color: Colors.black),
-                                        color: Color(0xFFFFD54F),
+                                        color: const Color(0xFFFFD54F),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(

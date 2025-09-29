@@ -60,15 +60,15 @@ class DriverProfile {
     return DriverProfile(
       id: json['driverIid'] ?? 0,
       name: json['name'] ?? '',
-      dateOfBirth: DateTime.parse(json['dateOfBirth'] ?? DateTime.now().toIso8601String()),
+      dateOfBirth: DateTime.parse(json['dateOfBirth'] ?? DateTime.timestamp().toIso8601String()),
       email: json['email'],
       gender: json['gender'],
       experienceYears: json['experience'] ?? 0,
       licenseNumber: json['licenseNum'] ?? '',
       aadharNumber: json['aadharNum'] ?? '',
       alternatePhoneNum: json['alternatePhoneNum'],
-      contractStartDate: DateTime.parse(json['contractStartDate'] ?? DateTime.now().toIso8601String()),
-      contractEndDate: DateTime.parse(json['contractEndDate'] ?? DateTime.now().toIso8601String()),
+      contractStartDate: DateTime.parse(json['contractStartDate'] ?? DateTime.timestamp().toIso8601String()),
+      contractEndDate: DateTime.parse(json['contractEndDate'] ?? DateTime.timestamp().toIso8601String()),
       profilePic: json['profilePic'],
     );
   }

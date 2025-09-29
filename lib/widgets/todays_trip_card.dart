@@ -1,6 +1,7 @@
 import 'package:breezodriver/core/utils%20copy/size_config.dart';
 import 'package:breezodriver/core/utils/app_colors.dart';
 import 'package:breezodriver/core/utils/utils.dart';
+import 'package:breezodriver/features/trips/viewmodels/trip_details_viewmodel.dart';
 import 'package:flutter/material.dart';
 import '../features/trips/viewmodels/trip_viewmodel.dart';
 import 'scheduled_trip_card.dart';
@@ -146,7 +147,8 @@ class _TodaysTripCardState extends State<TodaysTripCard> {
                         duration: Utils.getHourAndMinuteFromSeconds(int.parse(trip.duration)),
                         distance: trip.distance,
                         passengers: trip.passengers,
-                        acceptBeforeTime: trip.acceptBeforeTime,
+                        acceptBeforeTime: Utils.formatTime(trip.startTime.subtract(const Duration(minutes: TripDetailsViewModel.acceptCutoffBeforeStartMins))),
+                        status: trip.status,
                         onTap: () {
                           Navigator.push(
                             context,

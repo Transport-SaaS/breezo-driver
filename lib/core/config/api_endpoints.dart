@@ -39,6 +39,7 @@ class ApiEndpoints {
   static const String getPartialTripInformation = '/driver/getPartialTripInformation';
   static const String getPartialDriverDataForTripRoute = '/driver/getPartialDriverDataForTripRoute';
   static const String getVehicleDetails = '/driver/getVehicleDetails';
+  static const String updateDriverTripStatus = '/driver/updateDriverTripStatus';
 
   // Trip endpoints
   static const String getTripDetails = '/tripData/getTripDetails';

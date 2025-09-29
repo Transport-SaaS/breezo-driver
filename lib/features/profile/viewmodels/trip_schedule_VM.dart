@@ -16,7 +16,7 @@ class TripScheduleViewModel extends ChangeNotifier {
     await Future.delayed(Duration(seconds: 2));
     
     // Create dummy data for upcoming trips
-    final now = DateTime.now();
+    final now = DateTime.timestamp();
     
     // Upcoming trips - next 3 days
     _upcomingSchedules = [

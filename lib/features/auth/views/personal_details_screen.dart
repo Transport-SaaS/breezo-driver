@@ -325,9 +325,9 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                         onTap: () async {
                           final pickedDate = await showDatePicker(
                             context: context,
-                            initialDate: DateTime.now(),
+                            initialDate: DateTime.timestamp(),
                             firstDate: DateTime(1960),
-                            lastDate: DateTime.now(),
+                            lastDate: DateTime.timestamp(),
                           );
                           if (pickedDate != null) {
                             setState(() {

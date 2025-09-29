@@ -1,9 +1,14 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:breezodriver/core/services/service_locator.dart';
 import 'package:breezodriver/features/profile/models/driver_model.dart';
 import 'package:breezodriver/features/profile/models/transporter_office_model.dart';
 import 'package:breezodriver/features/profile/repositories/driver_repository.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
+import '../../../core/config/api_endpoints.dart';
 import '../models/address_model.dart';
 import '../models/vehicle_model.dart';
 import '../models/working_schedule_model.dart';
@@ -424,6 +429,7 @@ class DriverViewModel extends ChangeNotifier {
       return false;
     }
   }
+
 
   String _convertTo24HourFormat(String time12h) {
     final parts = time12h.split(' ');

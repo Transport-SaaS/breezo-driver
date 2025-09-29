@@ -1,10 +1,16 @@
 import 'dart:async';
+import 'dart:math' as math;
+import 'package:breezodriver/features/profile/viewmodels/driver_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:breezodriver/features/trips/models/trip_model.dart';
+
+import '../../../core/services/service_locator.dart';
+import '../repositories/trip_repository.dart';
 
 enum TripStatus {
   assigned,
   accepted,
+  rejected,
   readyToStart,
   inProgress,
   destinationReached,
@@ -13,15 +19,19 @@ enum TripStatus {
 }
 
 class TripDetailsViewModel extends ChangeNotifier {
+  final TripRepository _tripRepository = serviceLocator<TripRepository>();
+  final DriverViewModel driverViewModel;
   final TripModel _trip;
   TripStatus _status = TripStatus.assigned;
+  Timer? _acceptanceTimer;
   Timer? _delayTimer;
   Timer? _arrivalTimer;
   int _delaySeconds = 5; // Initial 5-second timer
+  int _acceptanceSeconds = 10; // Initial 10-second timer for accepted state
   bool _isLoadingAction = false;
   bool _canStartTrip = false;
   bool _hasArrivedAtLocation = false;
-  
+
   // Track which passengers have been picked up
   final Set<String> _pickedUpPassengerIds = {};
   
@@ -41,6 +51,9 @@ class TripDetailsViewModel extends ChangeNotifier {
   static const int initialAssignedDelay = 5; // 5 seconds for assigned state
   static const int initialAcceptedDelay = 10; // 10 seconds for accepted state
 
+  static const int acceptCutoffBeforeStartMins = 30;
+  static const int acceptCutoffAfterStartMins = 30;
+
   // Arrival notification - visible briefly when the driver arrives
   bool _showArrivedNotification = false;
   
@@ -53,20 +66,9 @@ class TripDetailsViewModel extends ChangeNotifier {
   
   // For rejection reason
   String? _rejectionReason;
-  TripDetailsViewModel(this._trip) {
-    // Initialize timer if trip is assigned
-    if (_trip.status == 'Assigned') {
-      _delaySeconds = initialAssignedDelay;
-      _startDelayTimer();
-    } else if (_trip.status == 'Accepted') {
-      _status = TripStatus.accepted;
-      _delaySeconds = 0;
-      _canStartTrip = true;
-    } else if (_trip.status == 'Completed') {
-      _status = TripStatus.completed;
-      _delaySeconds = 0;
-      _canStartTrip = false;
-    }
+  TripDetailsViewModel(this._trip, this.driverViewModel) {
+    // Initialize timer if trip for tripStatus
+    handleTimersStartStop(_trip.status);
   }
 
   TripModel get trip => _trip;
@@ -100,6 +102,47 @@ class TripDetailsViewModel extends ChangeNotifier {
     
     return '$minutesStr:$secondsStr';
   }
+
+  bool isGettingReadyBeforeStarting() {
+    return DateTime.timestamp().isBefore(_trip.startTime.subtract(const Duration(minutes: acceptCutoffBeforeStartMins))) && _status == TripStatus.accepted;
+  }
+
+  bool isDelayInStarting() {
+    return DateTime.timestamp().isAfter(_trip.startTime) && DateTime.timestamp().isBefore(_trip.startTime.add(const Duration(minutes: acceptCutoffAfterStartMins))) && _status == TripStatus.accepted;
+  }
+
+  String get formattedAcceptanceTime {
+    int minutes, seconds;
+    if(DateTime.timestamp().isBefore(_trip.startTime.subtract(const Duration(minutes: acceptCutoffBeforeStartMins)))) {
+      minutes = _acceptanceSeconds ~/ 60;
+      seconds = _acceptanceSeconds % 60;
+    }
+    else {
+      minutes = _delaySeconds ~/ 60;
+      seconds = _delaySeconds % 60;
+    }
+
+    String minutesStr = minutes.toString().padLeft(2, '0');
+    String secondsStr = seconds.toString().padLeft(2, '0');
+
+    return '$minutesStr:$secondsStr';
+  }
+
+  String get formattedStartTimer {
+    int minutes, seconds;
+    if(DateTime.timestamp().isBefore(_trip.startTime.subtract(const Duration(minutes: acceptCutoffBeforeStartMins)))) {
+      minutes = _acceptanceSeconds ~/ 60;
+      seconds = _acceptanceSeconds % 60;
+    }
+    else {
+      minutes = _delaySeconds ~/ 60;
+      seconds = _delaySeconds % 60;
+    }
+
+    String minutesStr = minutes.toString().padLeft(2, '0');
+    String secondsStr = seconds.toString().padLeft(2, '0');
+    return '$minutesStr:$secondsStr';
+  }
   
   String get formattedArrivalTime {
     int minutes = _arrivalSeconds ~/ 60;
@@ -114,8 +157,21 @@ class TripDetailsViewModel extends ChangeNotifier {
   void _startDelayTimer() {
     _delayTimer?.cancel();
     _delayTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_delaySeconds > 0) {
-        _delaySeconds--;
+      if (_delaySeconds < acceptCutoffBeforeStartMins*60 + acceptCutoffAfterStartMins*60) {
+        _delaySeconds++;
+        notifyListeners();
+      } else {
+        timer.cancel();
+        notifyListeners();
+      }
+    });
+  }
+
+  void _startAcceptanceTimer() {
+    _acceptanceTimer?.cancel();
+    _acceptanceTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_acceptanceSeconds > 0) {
+        _acceptanceSeconds--;
         notifyListeners();
       } else {
         timer.cancel();
@@ -128,7 +184,7 @@ class TripDetailsViewModel extends ChangeNotifier {
       }
     });
   }
-  
+
   void _startArrivalTimer() {
     _arrivalTimer?.cancel();
     _arrivalSeconds = 60; // Reset to 1 minute
@@ -157,45 +213,104 @@ class TripDetailsViewModel extends ChangeNotifier {
     });
   }
 
-  Future<void> acceptTrip() async {
+  void handleTimersStartStop(String status) {
+    if (status == 'assigned') {
+      //trip cannot be started yet...this is before acceptCutoffBeforeStartMins
+      _delayTimer?.cancel();
+      _acceptanceTimer?.cancel();
+      _status = TripStatus.assigned;
+      if(DateTime.timestamp().isBefore(_trip.startTime.subtract(const Duration(minutes: acceptCutoffBeforeStartMins)))){
+        _status = TripStatus.assigned;
+        _acceptanceSeconds = _trip.startTime.subtract(const Duration(minutes: acceptCutoffBeforeStartMins)).difference(DateTime.timestamp()).inSeconds;
+        _canStartTrip = false;
+        _startAcceptanceTimer();
+      } else {
+        //there is a delay in accepting from driver
+        _status = TripStatus.assigned;
+        _delaySeconds = DateTime.timestamp().difference(_trip.startTime.subtract(const Duration(minutes: acceptCutoffBeforeStartMins))).inSeconds;
+        _canStartTrip = false;
+        _startDelayTimer();
+      }
+    } else if (status == 'accepted') {
+      _delayTimer?.cancel();
+      _acceptanceTimer?.cancel();
+      _status = TripStatus.accepted;
+      if (DateTime.timestamp().isBefore(_trip.startTime.subtract(
+          const Duration(minutes: acceptCutoffBeforeStartMins)))) {
+        _acceptanceSeconds = math.max(initialAcceptedDelay, _trip.startTime
+            .difference(DateTime.timestamp())
+            .inSeconds - (acceptCutoffBeforeStartMins * 60));
+        _canStartTrip = false;
+        // Start the Getting Ready timer
+        _startAcceptanceTimer();
+      }
+      else if (DateTime.timestamp().isAfter(_trip.startTime.subtract(
+          const Duration(minutes: acceptCutoffBeforeStartMins))) &&
+          DateTime.timestamp().isBefore(_trip.startTime)) {
+        // driver can start the trip any time in this period
+        _acceptanceSeconds = 0;
+        _canStartTrip = true;
+        _delaySeconds = DateTime
+            .timestamp()
+            .difference(_trip.startTime)
+            .inSeconds;
+        _startDelayTimer();
+      }
+      else if (DateTime.timestamp().isAfter(_trip.startTime) &&
+          DateTime.timestamp().isBefore(_trip.startTime.add(
+              const Duration(minutes: acceptCutoffAfterStartMins)))) {
+        // delay in starting the trip
+        _delaySeconds = DateTime
+            .timestamp()
+            .difference(_trip.startTime)
+            .inSeconds;
+        _startDelayTimer();
+        _canStartTrip = true;
+      }
+      else {
+        // Trip is no longer valid for acceptance
+        _status = TripStatus.cancelled;
+      }
+    } else if (_trip.status == 'completed') {
+      _status = TripStatus.completed;
+      _delaySeconds = 0;
+      _canStartTrip = false;
+    }
+  }
+
+  Future<bool> acceptTrip() async {
     _isLoadingAction = true;
     notifyListeners();
-    
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-    
-    // Move to accepted state and start a new 10-second timer
-    _status = TripStatus.accepted;
-    _delayTimer?.cancel();
-    _delaySeconds = initialAcceptedDelay;
-    _canStartTrip = false; // Can't start trip until timer completes
+    bool ret = await updateDriverTripStatus(int.parse(_trip.id), TripStatus.accepted.name);
+    if(ret) {
+      // Move to accepted state and start a new 10-second timer
+      handleTimersStartStop(TripStatus.accepted.name);
+    }
     _isLoadingAction = false;
-    
-    // Start the Getting Ready timer
-    _startDelayTimer();
-    
     notifyListeners();
+
+    return ret;
   }
   
   Future<void> rejectTrip() async {
     _isLoadingAction = true;
     notifyListeners();
-    
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-    
-    // Log the rejection reason
-    if (_rejectionReason != null) {
-      print('Trip rejected for reason: $_rejectionReason');
+    bool ret = await updateDriverTripStatus(int.parse(_trip.id), TripStatus.rejected.name);
+    if(ret) {
+      // Move to rejected state
+      _status = TripStatus.rejected;
+      _delayTimer?.cancel();
+      _acceptanceTimer?.cancel();
+      _canStartTrip = false;
     }
-    
-    _status = TripStatus.cancelled;
-    _delayTimer?.cancel();
+
     _isLoadingAction = false;
     notifyListeners();
   }
   
   Future<void> startTrip() async {
+    _acceptanceTimer?.cancel();
+    _delayTimer?.cancel();
     // Only allow starting trip if the Getting Ready timer has completed
     if (!_canStartTrip) return;
     
@@ -369,7 +484,7 @@ class TripDetailsViewModel extends ChangeNotifier {
     _isSubmittingFeedback = false;
     notifyListeners();
   }
-  
+
   // For demonstration purposes - simulate completion of all passenger pickups
   void simulateAllPickupsComplete() {
     // Mark all passengers as picked up
@@ -398,4 +513,18 @@ class TripDetailsViewModel extends ChangeNotifier {
     _arrivalTimer?.cancel();
     super.dispose();
   }
-} 
+
+  Future<bool> updateDriverTripStatus(int tripId, String status) async {
+    bool success = false;
+
+    try {
+      success = await _tripRepository.updateDriverTripStatus(tripId, status);
+    } catch (e) {
+      print('Error updating trip status: $e');
+      success = false;
+    } finally {
+      notifyListeners();
+    }
+    return success;
+  }
+}

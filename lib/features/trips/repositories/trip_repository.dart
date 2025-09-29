@@ -122,4 +122,37 @@ class TripRepository {
       return TripRouteModel.empty();
     }
   }
+
+  Future<bool> updateDriverTripStatus(int tripId, String status) async {
+    try {
+      final token = await _secureStorage.getAccessToken();
+      if (token == null || token.isEmpty) {
+        print('TripRepository: No auth token available');
+        return false;
+      }
+      final response = await _apiClient.post(
+        endpoint: ApiEndpoints.updateDriverTripStatus,
+        data: {
+          'tripIid': tripId,
+          'status': status,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      // Check response status
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('TripRepository updateDriverTripStatus error: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('Error updating driver trip status: $e');
+      return false;
+    }
+  }
 }

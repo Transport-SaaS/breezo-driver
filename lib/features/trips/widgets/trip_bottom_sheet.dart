@@ -85,7 +85,8 @@ class TripBottomSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Row(
-                    children: [
+                    children:
+                    [
                       Text(
                         viewModel.status == TripStatus.assigned
                             ? 'Delay'
@@ -96,8 +97,8 @@ class TripBottomSheet extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      _buildTimeDigit(viewModel.formattedDelay[0]),
-                      _buildTimeDigit(viewModel.formattedDelay[1]),
+                      _buildTimeDigit(viewModel.formattedAcceptanceTime[0]),
+                      _buildTimeDigit(viewModel.formattedAcceptanceTime[1]),
                       const Text(
                         ':',
                         style: TextStyle(
@@ -105,8 +106,8 @@ class TripBottomSheet extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      _buildTimeDigit(viewModel.formattedDelay[3]),
-                      _buildTimeDigit(viewModel.formattedDelay[4]),
+                      _buildTimeDigit(viewModel.formattedAcceptanceTime[3]),
+                      _buildTimeDigit(viewModel.formattedAcceptanceTime[4]),
                     ],
                   ),
                 ),
@@ -187,7 +188,16 @@ class TripBottomSheet extends StatelessWidget {
                             onPressed:
                                 viewModel.isLoadingAction
                                     ? null
-                                    : () => viewModel.acceptTrip(),
+                                    : () async {
+                                bool ret = await viewModel.acceptTrip();
+                                if(!ret) {
+                                  if(context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Something went wrong, please try again')),
+                                    );
+                                  }
+                                }
+                              },
                             activeColor: AppColors.activeButton,
                             inactiveColor: Colors.grey.shade300,
                             isActive: !viewModel.isLoadingAction,
@@ -382,7 +392,9 @@ class TripBottomSheet extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFF126E5F),
+              color: !viewModel.isDelayInStarting() ?
+              const Color(0xFF126E5F) :
+                const Color(0xFF6A121B),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
@@ -398,51 +410,55 @@ class TripBottomSheet extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Start your trip after',
-                      style: TextStyle(
+                    Text(
+                      viewModel.isGettingReadyBeforeStarting() ?
+                      'Start your trip after' : (
+                        viewModel.isDelayInStarting() ? 'Delay in starting' : 'Start your trip'
+                      ),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            children: [
-                              const Text(
-                                'Getting Ready',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
+                    viewModel.isGettingReadyBeforeStarting() || viewModel.isDelayInStarting() ?
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  viewModel.isDelayInStarting() ? 'Delay' : 'Getting Ready',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              _buildTimeDigit(viewModel.formattedDelay[0]),
-                              _buildTimeDigit(viewModel.formattedDelay[1]),
-                              const Text(
-                                ':',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                                const SizedBox(width: 8),
+                                _buildTimeDigit(viewModel.formattedStartTimer[0]),
+                                _buildTimeDigit(viewModel.formattedStartTimer[1]),
+                                const Text(
+                                  ':',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              _buildTimeDigit(viewModel.formattedDelay[3]),
-                              _buildTimeDigit(viewModel.formattedDelay[4]),
-                            ],
+                                _buildTimeDigit(viewModel.formattedStartTimer[3]),
+                                _buildTimeDigit(viewModel.formattedStartTimer[4]),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ) : const SizedBox(height: 4,),
                   ],
                 ),
               ],
@@ -645,7 +661,7 @@ class TripBottomSheet extends StatelessWidget {
                     if (!viewModel.hasArrivedAtLocation)
                       Row(
                         children: [
-                          Text(
+                          const Text(
                             'Waiting',
                             style: TextStyle(
                               color: Colors.white,
@@ -914,7 +930,7 @@ class TripBottomSheet extends StatelessWidget {
                   height: 32,
                   width: 32,
                   margin: const EdgeInsets.only(right: 8),
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: AppColors.primarycolorDark,
                     shape: BoxShape.circle,
                   ),
@@ -991,7 +1007,7 @@ class TripBottomSheet extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
+                const Icon(
                   Icons.location_on,
                   color: AppColors.primarycolor,
                   size: 16,

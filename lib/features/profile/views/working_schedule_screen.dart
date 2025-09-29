@@ -315,9 +315,9 @@ context.read<BusinessViewModel>().getWorkingHours(),
         onTap: () async {
           final DateTime? picked = await showDatePicker(
             context: context,
-            initialDate: DateTime.now(),
-            firstDate: DateTime.now(),
-            lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+            initialDate: DateTime.timestamp(),
+            firstDate: DateTime.timestamp(),
+            lastDate: DateTime.timestamp().add(const Duration(days: 365 * 5)),
           );
           if (picked != null) {
             if (isStart) {

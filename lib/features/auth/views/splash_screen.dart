@@ -1,8 +1,11 @@
 // lib/views/screens/splash_screen.dart
 
+import 'dart:async';
+
 import 'package:breezodriver/core/utils/app_assets.dart';
 import 'package:breezodriver/features/auth/views/phone_number_screen.dart';
 import 'package:breezodriver/features/home/views/home_screen.dart';
+import 'package:breezodriver/features/trips/models/trip_model.dart';
 import 'package:breezodriver/features/trips/viewmodels/trip_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -53,6 +56,11 @@ class _SplashScreenState extends State<SplashScreen> {
           final tripViewModel = Provider.of<TripViewModel>(context, listen: false);
           await tripViewModel.loadPlannedTrips();
           await tripViewModel.loadPastTrips();
+          TripModel? currentTrip = await tripViewModel.getCurrentTrip();
+          if(currentTrip!=null) {
+            //send driver location updates to server every 5 seconds
+            // await driverViewModel.startLocationUpdates(currentTrip.id);
+          }
           if (mounted) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => const HomeScreen()),

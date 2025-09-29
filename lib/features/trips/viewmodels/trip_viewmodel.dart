@@ -31,6 +31,23 @@ class TripViewModel extends ChangeNotifier {
     }
   }
 
+  Future<TripModel?> getCurrentTrip() async {
+    if(_plannedTrips.isEmpty) {
+      await loadPlannedTrips();
+    }
+
+    try {
+      TripModel? currentTrip = _plannedTrips.firstWhere(
+        (trip) => trip.status == 'started',
+      );
+      // Handle the current trip as needed
+      print('Current trip loaded: ${currentTrip.id}');
+      return currentTrip;
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<void> loadPastTrips() async {
     _isLoading = true;
     notifyListeners();
@@ -48,7 +65,7 @@ class TripViewModel extends ChangeNotifier {
 
   Future<void> loadTripDetails(TripModel trip, bool isPastTrip) async {
     _isLoading = true;
-    notifyListeners();
+    // notifyListeners();
     if(trip.passengerList.isNotEmpty) {
       return;
     }

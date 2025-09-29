@@ -28,7 +28,7 @@
 //   TimeOfDay officeOutTime = const TimeOfDay(hour: 19, minute: 30);
 
 //   String _formatTimeOfDay(TimeOfDay time) {
-//     final now = DateTime.now();
+//     final now = DateTime.timestamp();
 //     final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
 //     return DateFormat('hh:mm a').format(dt).toLowerCase();
 //   }

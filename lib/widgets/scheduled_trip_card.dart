@@ -19,6 +19,7 @@ class ScheduledTripCard extends StatefulWidget {
   final String distance;
   final int passengers;
   final String acceptBeforeTime;
+  final String status;
   // Add this to the ScheduledTripCard class parameters
   final Function()? onTap;
   
@@ -33,6 +34,7 @@ class ScheduledTripCard extends StatefulWidget {
     required this.distance,
     required this.passengers,
     required this.acceptBeforeTime,
+    required this.status,
     this.onTap,
   });
   
@@ -52,12 +54,10 @@ class _ScheduledTripCardState extends State<ScheduledTripCard> {
     final Color acceptBeforeColor = Colors.red.shade600;
     final Color dottedLineColor = Colors.deepPurple.shade400;
 
-    final bool isAssigned = !widget.acceptBeforeTime.contains('Accepted') && 
-                            !widget.acceptBeforeTime.contains('Expired') && 
-                            !widget.acceptBeforeTime.contains('Completed');
-    final bool isAccepted = widget.acceptBeforeTime.contains('Accepted');
-    final bool isMissed = widget.acceptBeforeTime.contains('Expired');
-    final bool isCompleted = widget.acceptBeforeTime.contains('Completed');
+    final bool isAssigned = widget.status.contains('assigned');
+    final bool isAccepted = widget.status.contains('accepted');
+    final bool isMissed = widget.status.contains('missed');
+    final bool isCompleted = widget.status.contains('completed');
 
     String tagText = 'PICKUP';
     Color tagBgColor = pickupTagColor;
@@ -87,7 +87,7 @@ class _ScheduledTripCardState extends State<ScheduledTripCard> {
               color: Colors.grey.withOpacity(0.2),
               spreadRadius: 1,
               blurRadius: 4,
-              offset: Offset(0, 2),
+              offset: const Offset(0, 2),
             ),
           ],
           borderRadius: BorderRadius.circular(16),

@@ -12,7 +12,7 @@ class TripModel {
   final String endAddress;
   final String duration;
   final String distance;
-  late final int passengers;
+  late int passengers;
   final String status; // "Assigned", "Accepted", "Missed", "Completed"
   final String acceptBeforeTime;
   final List<Passenger> passengerList;

@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:breezodriver/core/utils%20copy/size_config.dart';
 import 'package:breezodriver/core/utils/app_assets.dart';
 import 'package:breezodriver/core/utils/app_colors.dart';
@@ -5,12 +8,42 @@ import 'package:breezodriver/features/profile/views/profile_screen.dart';
 import 'package:breezodriver/widgets/todays_trip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
+import '../../../core/config/api_endpoints.dart';
 import '../../profile/viewmodels/driver_viewmodel.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  static const LocationSettings locationSettings = LocationSettings(
+    accuracy: LocationAccuracy.high,
+    distanceFilter: 100,
+  );
+  void startLocationUpdates(String driverId) {
+    // This method should start location updates for the driver
+    // Implementation depends on your location service setup
+    // For example, you might use a background service or a periodic timer
+    print('Starting location updates for driver');
+    print('creating Pulsar WebSocket connection...');
+    final channel = WebSocketChannel.connect(
+      Uri.parse('${ApiEndpoints.baseWsURL}/ws/v2/consumer/persistent/public/default/driver-location-updates-$driverId/trip-events-subscription?subscriptionType=Shared'),
+    );
+
+    Timer.periodic(const Duration(seconds: 10), (timer) async {
+      Position position = await Geolocator.getCurrentPosition(locationSettings: locationSettings);
+      final currentLocation = {
+        'lat': position.latitude,
+        'lng': position.longitude,
+        'driverIid': driverId,
+      };
+
+      // Send the location update to the WebSocket channel
+      channel.sink.add(json.encode(currentLocation));
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +56,7 @@ class HomeScreen extends StatelessWidget {
     String vehicleNumber = 'Unknown';
 
     final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
+    startLocationUpdates(driverViewModel.driverProfile!.id.toString());
     if (driverViewModel.defaultAddress != null) {
       address = driverViewModel.defaultAddress!.addressText;
       addressName = driverViewModel.defaultAddress!.addressName;

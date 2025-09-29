@@ -149,7 +149,7 @@ class _BusinessSelectionScreenState extends State<BusinessSelectionScreen> {
   }
 
   String _formatTimeOfDay(TimeOfDay time) {
-    final now = DateTime.now();
+    final now = DateTime.timestamp();
     final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
     return DateFormat('hh:mm a').format(dt).toLowerCase();
   }
@@ -468,9 +468,9 @@ class _BusinessSelectionScreenState extends State<BusinessSelectionScreen> {
         onTap: () async {
           final DateTime? picked = await showDatePicker(
             context: context,
-            initialDate: DateTime.now(),
-            firstDate: DateTime.now(),
-            lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+            initialDate: DateTime.timestamp(),
+            firstDate: DateTime.timestamp(),
+            lastDate: DateTime.timestamp().add(const Duration(days: 365 * 5)),
           );
           if (picked != null) {
             if (isStart) {

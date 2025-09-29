@@ -14,6 +14,7 @@ import 'package:breezodriver/features/trips/views/trip_rating_screen.dart';
 import 'package:breezodriver/features/trips/viewmodels/trip_rating_viewmodel.dart';
 
 import '../../../core/utils/utils.dart';
+import '../../profile/viewmodels/driver_viewmodel.dart';
 import '../viewmodels/trip_viewmodel.dart';
 
 class TripDetailsScreen extends StatefulWidget {
@@ -37,8 +38,10 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   void initState() {
     super.initState();
     loadTripDetails();
+
     // Create the view model directly
-    _viewModel = TripDetailsViewModel(widget.trip);
+    final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
+    _viewModel = TripDetailsViewModel(widget.trip, driverViewModel);
 
     // Add listener to rebuild UI when viewModel changes
     _viewModel.addListener(_onViewModelChanged);

@@ -5,6 +5,8 @@ import 'package:breezodriver/widgets/scheduled_trip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../viewmodels/trip_details_viewmodel.dart';
+
 class TripHistoryScreen extends StatefulWidget {
   const TripHistoryScreen({Key? key}) : super(key: key);
 
@@ -23,7 +25,7 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedDate = DateTime.now(); // Start with current date
+    _selectedDate = DateTime.timestamp(); // Start with current date
     _initializeTrips();
   }
 
@@ -132,10 +134,10 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
     return TripModel(
       id: '1',
       status: status,
-      assignedAt: DateTime.now(),
-      startTime: DateTime.now(),
+      assignedAt: DateTime.timestamp(),
+      startTime: DateTime.timestamp(),
       startAddress: 'Building No. 134, Mahalaxmi Nagar, Naga...',
-      endTime: DateTime.now().add(const Duration(hours: 1, minutes: 13)),
+      endTime: DateTime.timestamp().add(const Duration(hours: 1, minutes: 13)),
       endAddress: 'A2, Block-C, ABC Techpark, Maga...',
       duration: '01h 13m',
       distance: '20 kms',
@@ -275,7 +277,8 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
                     duration: trip.duration,
                     distance: trip.distance,
                     passengers: trip.passengers,
-                    acceptBeforeTime: trip.acceptBeforeTime,
+                    acceptBeforeTime: Utils.formatTime(trip.startTime.subtract(const Duration(minutes: TripDetailsViewModel.acceptCutoffBeforeStartMins))),
+                    status: trip.status,
                     onTap: () {
                       // Handle trip tap
                     },

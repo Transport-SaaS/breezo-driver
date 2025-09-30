@@ -29,16 +29,18 @@ class DriverInfo {
 
 class DriverProfile {
   final int id;
-  final String name;
-  final DateTime dateOfBirth;
+  final String? name;
+  final DateTime? dateOfBirth;
   final String? email;
-  final String gender;
-  final int experienceYears;
-  final String licenseNumber;
-  final String aadharNumber;
+  final String? gender;
+  final int? experienceYears;
+  final String? licenseNumber;
+  final String? aadharNumber;
   final String? alternatePhoneNum;
   late DateTime? contractStartDate;
   late DateTime? contractEndDate;
+  final String? currentAddress;
+  final String? permanentAddress;
   final String? profilePic;
   
   DriverProfile({
@@ -51,8 +53,10 @@ class DriverProfile {
     this.licenseNumber = '',
     this.aadharNumber = '',
     this.alternatePhoneNum,
-    required this.contractStartDate ,
-    required this.contractEndDate ,
+    this.contractStartDate,
+    this.contractEndDate,
+    this.currentAddress = '',
+    this.permanentAddress = '',
     this.profilePic,
   });
   
@@ -67,8 +71,10 @@ class DriverProfile {
       licenseNumber: json['licenseNum'] ?? '',
       aadharNumber: json['aadharNum'] ?? '',
       alternatePhoneNum: json['alternatePhoneNum'],
-      contractStartDate: DateTime.parse(json['contractStartDate'] ?? DateTime.timestamp().toIso8601String()),
-      contractEndDate: DateTime.parse(json['contractEndDate'] ?? DateTime.timestamp().toIso8601String()),
+      contractStartDate: DateTime.parse(json['contractStartDate']),
+      contractEndDate: DateTime.parse(json['contractEndDate']),
+      currentAddress: json['currentAddress'] ?? '',
+      permanentAddress: json['permanentAddress'] ?? '',
       profilePic: json['profilePic'],
     );
   }
@@ -77,7 +83,7 @@ class DriverProfile {
     return {
       'customerIid': id,
       'name': name,
-      'dateOfBirth': dateOfBirth.toIso8601String(),
+      'dateOfBirth': dateOfBirth?.toIso8601String(),
       'email': email,
       'gender': gender,
       'experience': experienceYears,
@@ -86,6 +92,8 @@ class DriverProfile {
       'alternatePhoneNum': alternatePhoneNum,
       'contractStartDate': contractStartDate?.toIso8601String(),
       'contractEndDate': contractEndDate?.toIso8601String(),
+      'currentAddress': currentAddress,
+      'permanentAddress': permanentAddress,
       'profilePic': profilePic,
     };
   }

@@ -21,9 +21,15 @@ class PersonalProfileDetailsScreen extends StatefulWidget {
 }
 
 class _PersonalProfileDetailsScreenState extends State<PersonalProfileDetailsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _initializeData();
+  }
   // Text controllers
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _dateOfBirthController = TextEditingController();
   final _alternatePhoneController = TextEditingController();
   final _currentAddressController = TextEditingController();
   final _permanentAddressController = TextEditingController();
@@ -60,8 +66,6 @@ class _PersonalProfileDetailsScreenState extends State<PersonalProfileDetailsScr
   /// Determines if all fields are filled (for enabling the Continue button).
   bool get isFormValid {
     return _nameController.text.trim().isNotEmpty &&
-        _emailController.text.trim().isNotEmpty &&
-        _alternatePhoneController.text.trim().isNotEmpty &&
         _currentAddressController.text.trim().isNotEmpty &&
         _permanentAddressController.text.trim().isNotEmpty &&
         _selectedGender != null;
@@ -69,17 +73,37 @@ class _PersonalProfileDetailsScreenState extends State<PersonalProfileDetailsScr
 
   void _onContinuePressed() {
     if (!isFormValid || !_isEditMode) return;
+    _saveProfile();
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Profile completed for: ${_nameController.text}')),
-    );
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => const SelectLocationScreen(isFromAllAddress: false),
-      ),
-    );
+  void _initializeData() {
+    setState(() {
+      _isLoading = true;
+    });
+    final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
+    if (driverViewModel.driverProfile != null) {
+      final data = driverViewModel.driverProfile!;
+      _nameController.text = data.name ?? '';
+      _aadharCardNumberController.text = data.aadharNumber ?? '';
+      _dateOfBirthController.text = data.dateOfBirth!.toLocal().toString().split(' ')[0];
+      _emailController.text = data.email ?? '';
+      _alternatePhoneController.text = data.alternatePhoneNum ?? '';
+      _currentAddressController.text = data.currentAddress ?? '';
+      _permanentAddressController.text = data.permanentAddress ?? '';
+
+      // Handle gender
+      if (data.gender == 'M' || data.gender == 'm') {
+        _selectedGender = 'Male';
+      } else if (data.gender == 'F' || data.gender == 'f') {
+        _selectedGender = 'Female';
+      }
+
+      // Note: profilePic handling would go here if needed
+      // if (data['profilePic'] != null) { ... }
+    }
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Future<void> _saveProfile() async {
@@ -108,15 +132,12 @@ class _PersonalProfileDetailsScreenState extends State<PersonalProfileDetailsScr
     );
     final success = await driverViewModel.saveProfile(
       name: _nameController.text,
-      dateOfBirth: DateTime.timestamp(), // Placeholder, should be replaced with actual DOB input
       email: _emailController.text.trim(),
       gender: genderCode,
-      profilePic: null,
       aadharNumber: _aadharCardNumberController.text,
-      licenseNumber: '',
       alternatePhoneNum: _alternatePhoneController.text.trim(),
-      experienceYears: 0,
-      contractStartDate: DateTime.timestamp(),
+      currentAddress: _currentAddressController.text.trim(),
+      permanentAddress: _permanentAddressController.text.trim(),
     );
 
     setState(() {
@@ -198,38 +219,40 @@ class _PersonalProfileDetailsScreenState extends State<PersonalProfileDetailsScr
                             ),
                           ),
                           Spacer(),
-                          GestureDetector(
-                            onTap: _toggleEditMode,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: _isEditMode ? AppColors.secondary700 : Colors.grey),
-                              borderRadius: BorderRadius.circular(14),
-                              color: _isEditMode ? AppColors.secondary700.withOpacity(0.1) : Colors.transparent,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _isEditMode ? Icons.check : Icons.edit_outlined,
-                                  size: 16,
-                                  color: _isEditMode ? AppColors.secondary700 : Colors.grey, 
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _isEditMode ? 'Done' : 'Edit',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
+                          // only show when not in edit mode
+                          if (!_isEditMode)
+                            GestureDetector(
+                              onTap: _toggleEditMode,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: _isEditMode ? AppColors.secondary700 : Colors.grey),
+                                borderRadius: BorderRadius.circular(14),
+                                color: _isEditMode ? AppColors.secondary700.withOpacity(0.1) : Colors.transparent,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _isEditMode ? Icons.check : Icons.edit_outlined,
+                                    size: 16,
                                     color: _isEditMode ? AppColors.secondary700 : Colors.grey,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Edit',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: _isEditMode ? AppColors.secondary700 : Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              ),
                             ),
-                            ),
-                          ),
                         ],
                       ),
                       const SizedBox(height: 20),
@@ -378,16 +401,16 @@ class _PersonalProfileDetailsScreenState extends State<PersonalProfileDetailsScr
                       ),
                       const SizedBox(height: 16),
 
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.17,
-                      ),
+                      // SizedBox(
+                      //   height: MediaQuery.of(context).size.height * 0.17,
+                      // ),
 
                       // Continue button - only visible in edit mode
                       if (_isEditMode)
                         SizedBox(
                           width: double.infinity,
                           child: CommonButton(
-                            label: 'Continue',
+                            label: 'Save',
                             isActive: isFormValid,
                             onPressed: _onContinuePressed,
                           ),

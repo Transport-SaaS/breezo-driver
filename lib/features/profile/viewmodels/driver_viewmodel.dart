@@ -163,22 +163,35 @@ class DriverViewModel extends ChangeNotifier {
 
   // Save driver profile
   Future<bool> saveProfile({
-    required String name,
-    required DateTime dateOfBirth,
-    required String email,
-    required String gender,
-    required int experienceYears,
-    required String licenseNumber,
-    required String aadharNumber,
-    required String? alternatePhoneNum,
+    String? name,
+    DateTime? dateOfBirth,
+    String? email,
+    String? gender,
+    int? experienceYears,
+    String? licenseNumber,
+    String? aadharNumber,
+    String? alternatePhoneNum,
     DateTime? contractStartDate,
     DateTime? contractEndDate,
-    final String? profilePic,
+    String? currentAddress,
+    String? permanentAddress,
+    String? profilePic,
   }) async {
     try {
       _status = DriverDataStatus.loading;
       notifyListeners();
-
+      name = name ?? _driverProfile?.name;
+      dateOfBirth = dateOfBirth ?? _driverProfile?.dateOfBirth;
+      email = email ?? _driverProfile?.email;
+      gender = gender ?? driverProfile?.gender;
+      experienceYears = experienceYears ?? _driverProfile?.experienceYears;
+      licenseNumber = licenseNumber ?? _driverProfile?.licenseNumber;
+      aadharNumber = aadharNumber ?? _driverProfile?.aadharNumber;
+      alternatePhoneNum = alternatePhoneNum ?? _driverProfile?.alternatePhoneNum;
+      contractStartDate = contractStartDate ?? _driverProfile?.contractStartDate;
+      contractEndDate = contractEndDate ?? _driverProfile?.contractEndDate;
+      currentAddress = currentAddress ?? _driverProfile?.currentAddress;
+      permanentAddress = permanentAddress ?? _driverProfile?.permanentAddress;
       final contractStartDateString = "${contractStartDate?.year}-${contractStartDate?.month.toString().padLeft(2, '0')}-${contractStartDate?.day.toString().padLeft(2, '0')}";
       final contractEndDateString = "${contractEndDate?.year}-${contractEndDate?.month.toString().padLeft(2, '0')}-${contractEndDate?.day.toString().padLeft(2, '0')}";
       final result = await _driverRepository.saveProfile(
@@ -192,6 +205,8 @@ class DriverViewModel extends ChangeNotifier {
         alternatePhoneNum: alternatePhoneNum,
         contractStartDate: contractStartDateString,
         contractEndDate: contractEndDateString,
+        currentAddress: currentAddress,
+        permanentAddress: permanentAddress,
         profilePic: profilePic,
       );
 
@@ -208,6 +223,8 @@ class DriverViewModel extends ChangeNotifier {
           alternatePhoneNum: alternatePhoneNum,
           contractStartDate: contractStartDate,
           contractEndDate: contractEndDate,
+          currentAddress: currentAddress ?? '',
+          permanentAddress: permanentAddress ?? '',
           profilePic: profilePic,
         );
 

@@ -78,16 +78,18 @@ class DriverRepository {
   /// Save driver profile
   /// Returns true if profile was successfully saved
   Future<bool> saveProfile({
-    required String name,
-    required DateTime dateOfBirth,
+    required String? name,
+    required DateTime? dateOfBirth,
     required String? email,
-    required String gender,
-    required int experienceYears,
-    required String licenseNumber,
-    required String aadharNumber,
+    required String? gender,
+    required int? experienceYears,
+    required String? licenseNumber,
+    required String? aadharNumber,
     String? alternatePhoneNum,
     final String? contractStartDate,
     final String? contractEndDate,
+    final String? currentAddress,
+    final String? permanentAddress,
     final String? profilePic,
   }) async {
     try {
@@ -100,7 +102,7 @@ class DriverRepository {
 
       final Map<String, dynamic> profileData = {
         "name": name,
-        "dateOfBirth": dateOfBirth.toIso8601String(),
+        "dateOfBirth": dateOfBirth?.toIso8601String(),
         "gender": gender,
         "profilePic": profilePic,
         "experience": experienceYears,
@@ -109,6 +111,8 @@ class DriverRepository {
         "alternatePhoneNum": alternatePhoneNum,
         "contractStartDate": contractStartDate,
         "contractEndDate": contractEndDate,
+        "currentAddress": currentAddress,
+        "permanentAddress": permanentAddress,
       };
 
       final response = await _apiClient.post(

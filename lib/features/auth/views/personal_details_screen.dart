@@ -62,7 +62,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
       _driverExperienceController.text = data.experienceYears.toString() ?? '';
       _driverLicenceController.text = data.licenseNumber ?? '';
       _aadharCardNumberController.text = data.aadharNumber ?? '';
-      _dateOfBirthController.text = data.dateOfBirth.toLocal().toString().split(' ')[0];
+      _dateOfBirthController.text = data.dateOfBirth!.toLocal().toString().split(' ')[0];
       _emailController.text = data.email ?? '';
       _alternatePhoneController.text = data.alternatePhoneNum ?? '';
 
@@ -142,7 +142,9 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
       alternatePhoneNum: _alternatePhoneController.text.isNotEmpty
           ? _alternatePhoneController.text
           : null,
-      experienceYears: int.tryParse(_driverExperienceController.text) ?? 0
+      experienceYears: int.tryParse(_driverExperienceController.text) ?? 0,
+      currentAddress: null,
+      permanentAddress: null,
     );
 
     setState(() {

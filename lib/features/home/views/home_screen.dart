@@ -56,7 +56,9 @@ class HomeScreen extends StatelessWidget {
     String vehicleNumber = 'Unknown';
 
     final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
-    startLocationUpdates(driverViewModel.driverProfile!.id.toString());
+    if(driverViewModel.driverProfile!=null) {
+      startLocationUpdates(driverViewModel.driverProfile!.id.toString());
+    }
     if (driverViewModel.defaultAddress != null) {
       address = driverViewModel.defaultAddress!.addressText;
       addressName = driverViewModel.defaultAddress!.addressName;

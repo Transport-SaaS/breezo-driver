@@ -6,9 +6,13 @@ import 'package:breezodriver/widgets/common_button.dart';
 import 'package:breezodriver/widgets/common_textfield.dart';
 import 'package:breezodriver/widgets/progress_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
 // For picking images from gallery/camera
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+
+import '../viewmodels/driver_viewmodel.dart';
 
 
 // import 'select_location_screen.dart';
@@ -21,6 +25,11 @@ class DriverDetailsScreen extends StatefulWidget {
 }
 
 class _DriverDetailsScreenState extends State<DriverDetailsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _initializeData();
+  }
   // Text controllers
   final _drivingExperienceController = TextEditingController();
   final _drivingLicenseNumberController = TextEditingController();
@@ -35,19 +44,55 @@ class _DriverDetailsScreenState extends State<DriverDetailsScreen> {
         _aadharCardNumberController.text.trim().isNotEmpty; 
   }
 
+  void _initializeData() {
+    final driverViewModel = Provider.of<DriverViewModel>(context, listen: false);
+    if (driverViewModel.driverProfile != null) {
+      final data = driverViewModel.driverProfile!;
+      _drivingExperienceController.text = data.experienceYears != null ? data.experienceYears.toString() : '';
+      _drivingLicenseNumberController.text = data.licenseNumber ?? '';
+      _aadharCardNumberController.text = data.aadharNumber ?? '';
+    }
+  }
+
   void _onContinuePressed() {
     if (!isFormValid || !_isEditMode) return;
-    // TODO: Handle form submission logic, then navigate or do next steps
-    // ScaffoldMessenger.of(context).showSnackBar(
-    //   SnackBar(content: Text('Profile completed for: ${_nameController.text}')),
-    // );
-    Navigator.push(
+    _saveProfile();
+  }
+
+  Future<void> _saveProfile() async {
+    if (!isFormValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all required fields')),
+      );
+      return;
+    }
+
+    final driverViewModel = Provider.of<DriverViewModel>(
       context,
-      MaterialPageRoute(
-        builder:
-            (context) => const SelectLocationScreen(isFromAllAddress: false),
-      ),
+      listen: false,
     );
+    final success = await driverViewModel.saveProfile(
+      experienceYears: int.tryParse(_drivingExperienceController.text) ?? 0,
+      licenseNumber: _drivingLicenseNumberController.text,
+      aadharNumber: _aadharCardNumberController.text,
+    );
+
+    setState(() {
+      if (success) {
+        // _isEditing = false;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Details saved successfully')),
+        );
+        setState(() {
+          _isEditMode=false;
+        });
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to save profile')));
+        _initializeData();
+      }
+    });
   }
 
   // Toggle edit mode
@@ -101,7 +146,7 @@ class _DriverDetailsScreenState extends State<DriverDetailsScreen> {
                             onTap: () {
                               Navigator.pop(context);
                             },
-                            child: Icon(Icons.arrow_back, color: Colors.black),
+                            child: const Icon(Icons.arrow_back, color: Colors.black),
                           ),
                           const SizedBox(width: 10),
                           const Text(
@@ -111,54 +156,55 @@ class _DriverDetailsScreenState extends State<DriverDetailsScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Spacer(),
-                          GestureDetector(
-                            onTap: _toggleEditMode,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: _isEditMode ? AppColors.secondary700 : Colors.grey),
-                              borderRadius: BorderRadius.circular(14),
-                              color: _isEditMode ? AppColors.secondary700.withOpacity(0.1) : Colors.transparent,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _isEditMode ? Icons.check : Icons.edit_outlined,
-                                  size: 16,
-                                  color: _isEditMode ? AppColors.secondary700 : Colors.grey, 
-                                ),
-                                SizedBox(width: 4),
-                                Text(
-                                  _isEditMode ? 'Done' : 'Edit',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
+                          const Spacer(),
+                          if(!_isEditMode)
+                            GestureDetector(
+                              onTap: _toggleEditMode,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: _isEditMode ? AppColors.secondary700 : Colors.grey),
+                                borderRadius: BorderRadius.circular(14),
+                                color: _isEditMode ? AppColors.secondary700.withOpacity(0.1) : Colors.transparent,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _isEditMode ? Icons.check : Icons.edit_outlined,
+                                    size: 16,
                                     color: _isEditMode ? AppColors.secondary700 : Colors.grey,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _isEditMode ? 'Done' : 'Edit',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: _isEditMode ? AppColors.secondary700 : Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              ),
                             ),
-                            ),
-                          ),
                         ],
                       ),
                       const SizedBox(height: 20),
-                       const Text(
-                            'BUSINESS DETAILS',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey
-                            ),
-                          ),
+                       // const Text(
+                       //      'BUSINESS DETAILS',
+                       //      style: TextStyle(
+                       //        fontSize: 14,
+                       //        fontWeight: FontWeight.bold,
+                       //        color: Colors.grey
+                       //      ),
+                       //    ),
 
 
                       // Avatar + Camera/Gallery icon
-                      Stack(
+                      const Stack(
                         alignment: Alignment.bottomRight,
                         children: [
                           // Add your avatar widgets here if needed
@@ -168,10 +214,16 @@ class _DriverDetailsScreenState extends State<DriverDetailsScreen> {
 
                       // Name field
                       CommonTextField(
-                        label: 'Driving Experience',
+                        label: 'Driving Experience in years',
                         hintText: 'Enter your driving experience',
                         controller: _drivingExperienceController,
+                        keyboardType: TextInputType.number,
                         enabled: _isEditMode,
+                        inputFormatters: [
+                          FilteringTextInputFormatter
+                              .digitsOnly,
+                          LengthLimitingTextInputFormatter(2),
+                        ],
                       ),
                       const SizedBox(height: 16),
 
@@ -200,7 +252,7 @@ class _DriverDetailsScreenState extends State<DriverDetailsScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: CommonButton(
-                            label: 'Continue',
+                            label: 'Save',
                             isActive: isFormValid,
                             onPressed: _onContinuePressed,
                           ),

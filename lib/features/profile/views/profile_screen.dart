@@ -140,7 +140,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       _buildMenuItem(
                         icon: Icons.drive_eta,
-                        title: 'Driving Details',
+                        title: 'Driver Details',
                         onTap: () {
                           Navigator.push(
                             context,

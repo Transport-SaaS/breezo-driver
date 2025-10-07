@@ -147,10 +147,14 @@ class _PersonalProfileDetailsScreenState extends State<PersonalProfileDetailsScr
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile saved successfully')),
         );
+        setState(() {
+          _isEditMode=false;
+        });
       } else {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Failed to save profile')));
+        _initializeData();
       }
     });
   }
@@ -218,7 +222,7 @@ class _PersonalProfileDetailsScreenState extends State<PersonalProfileDetailsScr
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Spacer(),
+                          const Spacer(),
                           // only show when not in edit mode
                           if (!_isEditMode)
                             GestureDetector(

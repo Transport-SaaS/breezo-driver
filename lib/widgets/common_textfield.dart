@@ -1,6 +1,7 @@
 // lib/views/widgets/common_textfield.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CommonTextField extends StatelessWidget {
   final String label;
@@ -11,6 +12,7 @@ class CommonTextField extends StatelessWidget {
   final bool enabled;
   final bool readOnly;
   final Function()? onTap;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CommonTextField({
     Key? key,
@@ -22,6 +24,7 @@ class CommonTextField extends StatelessWidget {
     this.onChanged,
     this.readOnly = false,
     this.onTap,
+    this.inputFormatters
   }) : super(key: key);
 
   @override
@@ -59,6 +62,7 @@ class CommonTextField extends StatelessWidget {
             filled: !enabled,
             fillColor: enabled ? null : Colors.grey.shade100,
           ),
+          inputFormatters: inputFormatters,
         ),
       ],
     );
